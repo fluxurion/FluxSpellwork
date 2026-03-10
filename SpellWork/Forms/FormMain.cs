@@ -91,7 +91,9 @@ namespace SpellWork.Forms
 
         private void TabControl1SelectedIndexChanged(object sender, EventArgs e)
         {
-            _cbProcFlag.Visible = _bWrite.Visible = ((TabControl)sender).SelectedIndex == 1;
+            var selectedIndex = ((TabControl)sender).SelectedIndex;
+            _cbProcFlag.Visible = _bWrite.Visible = selectedIndex == 1;
+            _bSpellScript.Visible = selectedIndex == 0;
         }
 
         private void SettingsClick(object sender, EventArgs e)
@@ -161,6 +163,142 @@ namespace SpellWork.Forms
                         break;
                 }
             }
+        }
+
+        private void SpellScriptClick(object sender, EventArgs e)
+        {
+            if (_lvSpellList.SelectedIndices.Count <= 0)
+            {
+                MessageBox.Show(@"Please select a spell first.", @"SpellScript", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var spell = _spellList[_lvSpellList.SelectedIndices[0]];
+            var generatedScript = BuildSpellScriptTemplate(spell);
+
+            using (var previewForm = new Form())
+            using (var scriptTextBox = new TextBox())
+            {
+                previewForm.Text = $@"Generated SpellScript - {spell.ID}";
+                previewForm.StartPosition = FormStartPosition.CenterParent;
+                previewForm.Size = new Size(1000, 700);
+                previewForm.MinimumSize = new Size(700, 500);
+
+                scriptTextBox.Dock = DockStyle.Fill;
+                scriptTextBox.Multiline = true;
+                scriptTextBox.ReadOnly = true;
+                scriptTextBox.ScrollBars = ScrollBars.Both;
+                scriptTextBox.WordWrap = false;
+                scriptTextBox.Font = new Font("Consolas", 10);
+                scriptTextBox.Text = generatedScript;
+
+                previewForm.Controls.Add(scriptTextBox);
+                previewForm.ShowDialog(this);
+            }
+        }
+
+        private static string BuildSpellScriptTemplate(SpellInfo spell)
+        {
+            var scriptToken = BuildScriptToken(spell.Name);
+            var className = $"spell_custom_{scriptToken}";
+            var scriptName = $"spell_custom_{scriptToken}";
+
+            var effects = spell.SpellEffectInfoStore
+                .Where(e => e.SpellEffect != null)
+                .OrderBy(e => e.EffectIndex)
+                .ToList();
+
+            var triggeredSpellIds = effects
+                .Select(e => e.EffectTriggerSpell)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"// {spell.ID} - {spell.NameAndSubname}");
+            sb.AppendLine($"class {className} : public SpellScript");
+            sb.AppendLine("{");
+
+            if (triggeredSpellIds.Count > 0)
+            {
+                sb.AppendLine("    bool Validate(SpellInfo const* /*spellInfo*/) override");
+                sb.AppendLine("    {");
+                sb.AppendLine("        return ValidateSpellInfo(");
+                sb.AppendLine("            {");
+                for (var i = 0; i < triggeredSpellIds.Count; i++)
+                {
+                    var separator = i + 1 == triggeredSpellIds.Count ? string.Empty : ",";
+                    sb.AppendLine($"                {triggeredSpellIds[i]}{separator}");
+                }
+                sb.AppendLine("            });");
+                sb.AppendLine("    }");
+                sb.AppendLine();
+            }
+
+            if (effects.Count == 0)
+            {
+                sb.AppendLine("    void Register() override");
+                sb.AppendLine("    {");
+                sb.AppendLine("        // No SpellEffect rows found for this spell in loaded data.");
+                sb.AppendLine("    }");
+            }
+            else
+            {
+                foreach (var effect in effects)
+                {
+                    var effectName = ((SpellEffects)effect.Effect).ToString();
+                    var auraName = ((AuraType)effect.EffectAura).ToString();
+
+                    sb.AppendLine($"    // Effect {effect.EffectIndex}: {effectName}, Aura: {auraName}");
+                    sb.AppendLine($"    void HandleEffect{effect.EffectIndex}(SpellEffIndex /*effIndex*/)");
+                    sb.AppendLine("    {");
+                    sb.AppendLine("        // TODO: implement logic");
+                    sb.AppendLine("    }");
+                    sb.AppendLine();
+                }
+
+                sb.AppendLine("    void Register() override");
+                sb.AppendLine("    {");
+                foreach (var effect in effects)
+                {
+                    var effectName = ((SpellEffects)effect.Effect).ToString();
+                    sb.AppendLine($"        OnEffectHit += SpellEffectFn({className}::HandleEffect{effect.EffectIndex}, {GetEffectIndexToken(effect.EffectIndex)}, {effectName});");
+                }
+                sb.AppendLine("    }");
+            }
+
+            sb.AppendLine("};");
+            sb.AppendLine();
+            sb.AppendLine("void AddSC_custom_spell_scripts()");
+            sb.AppendLine("{");
+            sb.AppendLine($"    RegisterSpellScript({className}); // {scriptName}");
+            sb.AppendLine("}");
+
+            return sb.ToString();
+        }
+
+        private static string BuildScriptToken(string name)
+        {
+            var token = name.ToLowerInvariant();
+            var chars = token.Select(ch => char.IsLetterOrDigit(ch) ? ch : '_').ToArray();
+            token = new string(chars);
+
+            while (token.Contains("__"))
+                token = token.Replace("__", "_");
+
+            token = token.Trim('_');
+            return string.IsNullOrEmpty(token) ? "generated" : token;
+        }
+
+        private static string GetEffectIndexToken(int effectIndex)
+        {
+            return effectIndex switch
+            {
+                0 => "EFFECT_0",
+                1 => "EFFECT_1",
+                2 => "EFFECT_2",
+                _ => $"(SpellEffIndex){effectIndex}"
+            };
         }
 
         #endregion
@@ -747,6 +885,7 @@ namespace SpellWork.Forms
         {
             tabControl1.Enabled = true;
             _bLevelScaling.Enabled = true;
+            _bSpellScript.Enabled = true;
         }
 
         public void SetLoadingProgress(int progress)

@@ -183,6 +183,7 @@
             _bSqlSave = new System.Windows.Forms.Button();
             _cbProcFlag = new System.Windows.Forms.CheckBox();
             _bWrite = new System.Windows.Forms.Button();
+            _bSpellScript = new System.Windows.Forms.Button();
             _bLevelScaling = new System.Windows.Forms.Button();
             loadingProgressBar1 = new System.Windows.Forms.ProgressBar();
             loadingProgressLabel1 = new System.Windows.Forms.Label();
@@ -2019,6 +2020,19 @@
             _bWrite.Visible = false;
             _bWrite.Click += WriteClick;
             // 
+            // _bSpellScript
+            // 
+            _bSpellScript.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            _bSpellScript.Enabled = false;
+            _bSpellScript.Location = new System.Drawing.Point(1217, 1);
+            _bSpellScript.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            _bSpellScript.Name = "_bSpellScript";
+            _bSpellScript.Size = new System.Drawing.Size(86, 27);
+            _bSpellScript.TabIndex = 4;
+            _bSpellScript.Text = "SpellScript";
+            _bSpellScript.UseVisualStyleBackColor = true;
+            _bSpellScript.Click += SpellScriptClick;
+            // 
             // _bLevelScaling
             // 
             _bLevelScaling.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
@@ -2027,7 +2041,7 @@
             _bLevelScaling.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             _bLevelScaling.Name = "_bLevelScaling";
             _bLevelScaling.Size = new System.Drawing.Size(70, 27);
-            _bLevelScaling.TabIndex = 4;
+            _bLevelScaling.TabIndex = 5;
             _bLevelScaling.Text = "Scaling";
             _bLevelScaling.UseVisualStyleBackColor = true;
             _bLevelScaling.Click += LevelScalingClick;
@@ -2058,6 +2072,7 @@
             ClientSize = new System.Drawing.Size(1384, 901);
             Controls.Add(loadingProgressLabel1);
             Controls.Add(loadingProgressBar1);
+            Controls.Add(_bSpellScript);
             Controls.Add(_bLevelScaling);
             Controls.Add(_bWrite);
             Controls.Add(_cbProcFlag);
@@ -2071,6 +2086,7 @@
             Name = "FormMain";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             Text = "FormMain";
+            WindowState = System.Windows.Forms.FormWindowState.Maximized;
             Resize += FormMainResize;
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
@@ -2282,6 +2298,7 @@
         private System.Windows.Forms.ToolStripMenuItem _tsmFile;
         private System.Windows.Forms.ToolStripMenuItem _tsmSettings;
         private System.Windows.Forms.ToolStripMenuItem _tsmExit;
+        private System.Windows.Forms.Button _bSpellScript;
         private System.Windows.Forms.Button _bLevelScaling;
         private System.Windows.Forms.RichTextBox _rtbProcSpellInfo;
         private System.Windows.Forms.GroupBox _gProcSpellTypeMask;
