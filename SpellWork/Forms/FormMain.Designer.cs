@@ -1,4 +1,4 @@
-﻿namespace SpellWork.Forms
+namespace SpellWork.Forms
 {
     sealed partial class FormMain
     {
@@ -183,6 +183,7 @@
             _bSqlSave = new System.Windows.Forms.Button();
             _cbProcFlag = new System.Windows.Forms.CheckBox();
             _bWrite = new System.Windows.Forms.Button();
+            _bCopySpellInfo = new System.Windows.Forms.Button();
             _bSpellScript = new System.Windows.Forms.Button();
             _bLevelScaling = new System.Windows.Forms.Button();
             loadingProgressBar1 = new System.Windows.Forms.ProgressBar();
@@ -2033,6 +2034,19 @@
             _bSpellScript.UseVisualStyleBackColor = true;
             _bSpellScript.Click += SpellScriptClick;
             // 
+            // _bCopySpellInfo
+            // 
+            _bCopySpellInfo.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            _bCopySpellInfo.Enabled = false;
+            _bCopySpellInfo.Location = new System.Drawing.Point(1116, 1);
+            _bCopySpellInfo.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            _bCopySpellInfo.Name = "_bCopySpellInfo";
+            _bCopySpellInfo.Size = new System.Drawing.Size(95, 27);
+            _bCopySpellInfo.TabIndex = 4;
+            _bCopySpellInfo.Text = "Copy Info";
+            _bCopySpellInfo.UseVisualStyleBackColor = true;
+            _bCopySpellInfo.Click += CopySpellInfoClick;
+            // 
             // _bLevelScaling
             // 
             _bLevelScaling.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
@@ -2072,6 +2086,7 @@
             ClientSize = new System.Drawing.Size(1384, 901);
             Controls.Add(loadingProgressLabel1);
             Controls.Add(loadingProgressBar1);
+            Controls.Add(_bCopySpellInfo);
             Controls.Add(_bSpellScript);
             Controls.Add(_bLevelScaling);
             Controls.Add(_bWrite);
@@ -2295,6 +2310,7 @@
         private System.Windows.Forms.CheckBox _cbBinaryCompare;
         private System.Windows.Forms.CheckBox _cbProcFlag;
         private System.Windows.Forms.Button _bWrite;
+        private System.Windows.Forms.Button _bCopySpellInfo;
         private System.Windows.Forms.ToolStripMenuItem _tsmFile;
         private System.Windows.Forms.ToolStripMenuItem _tsmSettings;
         private System.Windows.Forms.ToolStripMenuItem _tsmExit;
