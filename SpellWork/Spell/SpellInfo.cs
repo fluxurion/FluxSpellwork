@@ -646,7 +646,65 @@ namespace SpellWork.Spell
 
             AppendItemInfo(rtb);
 
+            AppendCraftingDataInfo(rtb);
+
             AppendSpellVisualInfo();
+        }
+
+        private void AppendCraftingDataInfo(RichTextBox rtb)
+        {
+            const int SPELL_EFFECT_CRAFT_ITEM = 288;
+            const int SPELL_EFFECT_CRAFT_ENCHANT = 301;
+            const int SPELL_EFFECT_CRAFT_SALVAGE_ITEM = 296;
+
+            foreach (var effectInfo in SpellEffectInfoStore)
+            {
+                var effect = effectInfo.SpellEffect;
+                if (effect == null)
+                    continue;
+
+                int craftingDataId = 0;
+
+                // Check if effect is SPELL_EFFECT_CRAFT_ITEM or SPELL_EFFECT_CRAFT_ENCHANT
+                // These use EffectMiscValueA (index 0) as CraftingDataID
+                if (effect.Effect == SPELL_EFFECT_CRAFT_ITEM || effect.Effect == SPELL_EFFECT_CRAFT_ENCHANT)
+                {
+                    craftingDataId = effect.EffectMiscValue[0];
+                }
+                // SPELL_EFFECT_CRAFT_SALVAGE_ITEM uses EffectMiscValueB (index 1) as CraftingDataID
+                else if (effect.Effect == SPELL_EFFECT_CRAFT_SALVAGE_ITEM)
+                {
+                    craftingDataId = effect.EffectMiscValue[1];
+                }
+                else
+                {
+                    continue;
+                }
+
+                // Check difficulty is NONE (0)
+                if (effect.DifficultyID != 0)
+                    continue;
+
+                // Check BasePoints is 1.00
+                var baseValue = CalculateBaseEffectValue(effect);
+                if (Math.Abs(baseValue - 1.0f) > 1.0E-5f)
+                    continue;
+
+                if (craftingDataId <= 0)
+                    continue;
+
+                // Look up CraftingData
+                if (!DBC.DBC.CraftingData.TryGetValue(craftingDataId, out var craftingData))
+                    continue;
+
+                // Display FirstCraftTreasureID if it exists
+                if (craftingData.FirstCraftTreasureID != 0)
+                {
+                    rtb.AppendLine(Separator);
+                    rtb.AppendFormatLine("FirstCraftTreasureID = {0} (CraftingDataID: {1})",
+                        craftingData.FirstCraftTreasureID, craftingDataId);
+                }
+            }
         }
 
         private float CalculateBaseEffectValue(SpellEffectEntry effect)

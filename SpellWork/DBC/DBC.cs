@@ -27,6 +27,7 @@ namespace SpellWork.DBC
         public static Storage<AreaTableEntry>                   AreaTable { get; set; }
         public static Storage<ContentTuningEntry>               ContentTuning { get; set; }
         public static Storage<ContentTuningXExpectedEntry>      ContentTuningXExpected { get; set; }
+        public static Storage<CraftingDataEntry>                CraftingData { get; set; }
         public static Storage<DifficultyEntry>                  Difficulty { get; set; }
         public static Storage<ExpectedStatEntry>                ExpectedStat { get; set; }
         public static Storage<ExpectedStatModEntry>             ExpectedStatMod { get; set; }
