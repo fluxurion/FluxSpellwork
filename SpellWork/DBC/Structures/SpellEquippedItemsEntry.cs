@@ -7,7 +7,7 @@ namespace SpellWork.DBC.Structures
         [Index(true)]
         public uint ID;
         public int SpellID;
-        public sbyte EquippedItemClass;
+        public int EquippedItemClass;
         public int EquippedItemInvTypes;
         public int EquippedItemSubclass;
     }

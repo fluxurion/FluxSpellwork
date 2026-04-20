@@ -344,15 +344,16 @@ namespace SpellWork.Forms
             _spellList = (from spellInfo in DBC.DBC.SpellInfoStore.Values
                           where
                               ((id == 0 || spellInfo.ID == id) && (ic == 0 || spellInfo.SpellIconFileDataID == ic) &&
-                               (at == 0 || (spellInfo.Attributes & at) != 0 || (spellInfo.AttributesEx & at) != 0 ||
-                                (spellInfo.AttributesEx2 & at) != 0 || (spellInfo.AttributesEx3 & at) != 0 ||
-                                (spellInfo.AttributesEx4 & at) != 0 || (spellInfo.AttributesEx5 & at) != 0 ||
-                                (spellInfo.AttributesEx6 & at) != 0 || (spellInfo.AttributesEx7 & at) != 0 ||
-                                (spellInfo.AttributesEx8 & at) != 0 || (spellInfo.AttributesEx9 & at) != 0 ||
-                                (spellInfo.AttributesEx10 & at) != 0 || (spellInfo.AttributesEx11 & at) != 0 ||
-                                (spellInfo.AttributesEx12 & at) != 0 || (spellInfo.AttributesEx13 & at) != 0 ||
-                                (spellInfo.AttributesEx14 & at) != 0)) && ((id != 0 || ic != 0 && at != 0) ||
-                                spellInfo.Name.ContainsText(name))
+                               (at == 0 || ((uint)spellInfo.Attributes & at) != 0 || ((uint)spellInfo.AttributesEx & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx2 & at) != 0 || ((uint)spellInfo.AttributesEx3 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx4 & at) != 0 || ((uint)spellInfo.AttributesEx5 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx6 & at) != 0 || ((uint)spellInfo.AttributesEx7 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx8 & at) != 0 || ((uint)spellInfo.AttributesEx9 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx10 & at) != 0 || ((uint)spellInfo.AttributesEx11 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx12 & at) != 0 || ((uint)spellInfo.AttributesEx13 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx14 & at) != 0 || ((uint)spellInfo.AttributesEx15 & at) != 0 ||
+                                ((uint)spellInfo.AttributesEx16 & at) != 0))
+                                && ((id != 0 || ic != 0 && at != 0) || spellInfo.Name.ContainsText(name))
                           orderby spellInfo.ID
                           select spellInfo).ToList();
 
@@ -864,14 +865,12 @@ namespace SpellWork.Forms
 
         private void LvSpellListRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
-            e.Item =
-                new ListViewItem(new[] { _spellList[e.ItemIndex].ID.ToString(), _spellList[e.ItemIndex].NameAndSubname, (_spellList[e.ItemIndex].Misc?.ID ?? 0).ToString() });
+            e.Item = new ListViewItem([string.Empty, _spellList[e.ItemIndex].ID.ToString(), _spellList[e.ItemIndex].NameAndSubname]);
         }
 
         private void LvProcSpellListRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
-            e.Item =
-                new ListViewItem(new[] { _spellProcList[e.ItemIndex].ID.ToString(), _spellProcList[e.ItemIndex].NameAndSubname });
+            e.Item = new ListViewItem([_spellProcList[e.ItemIndex].ID.ToString(), _spellProcList[e.ItemIndex].NameAndSubname]);
         }
 
         private void LvSqlDataRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)

@@ -18,6 +18,6 @@ namespace SpellWork.DBC.Structures
         public uint ZoneMusicID;
         public short TimeOfDayOverride;
         public sbyte EffectMask;
-        public byte LightFlags;
+        public int LightFlags;
     }
 }

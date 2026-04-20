@@ -7,7 +7,7 @@ namespace SpellWork.DBC.Structures
         [Index(true)]
         public uint ID;
         public short EffectAura;
-        public int DifficultyID;
+        public short DifficultyID;
         public int EffectIndex;
         public int Effect;
         public float EffectAmplitude;
@@ -30,6 +30,7 @@ namespace SpellWork.DBC.Structures
         public float GroupSizeBasePointsCoefficient;
         public float EffectBasePoints;
         public int ScalingClass;
+        public int TargetNodeGraph;
         [Cardinality(2)]
         public int[] EffectMiscValue = new int[2];
         [Cardinality(2)]

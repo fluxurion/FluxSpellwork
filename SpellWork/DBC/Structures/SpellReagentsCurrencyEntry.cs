@@ -7,7 +7,9 @@ namespace SpellWork.DBC.Structures
         [Index(true)]
         public uint ID;
         public int SpellID;
-        public ushort CurrencyTypesID;
-        public ushort CurrencyCount;
+        public int CurrencyTypesID;
+        public int CurrencyCount;
+        public int OverrideRecraftCurrencyCount;
+        public byte OrderSource;
     }
 }

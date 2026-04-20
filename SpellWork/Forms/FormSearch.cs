@@ -40,11 +40,16 @@ namespace SpellWork.Forms
             _spellList = (from spell in DBC.DBC.SpellInfoStore.Values
                           where
                               ((id == 0 || spell.ID == id) && (ic == 0 || spell.SpellIconFileDataID == ic) &&
-                               (at == 0 || (spell.Attributes & at) != 0 || (spell.AttributesEx & at) != 0 ||
-                                (spell.AttributesEx2 & at) != 0 || (spell.AttributesEx3 & at) != 0 ||
-                                (spell.AttributesEx4 & at) != 0 || (spell.AttributesEx5 & at) != 0 ||
-                                (spell.AttributesEx6 & at) != 0 || (spell.AttributesEx7 & at) != 0 || (spell.AttributesEx8 & at) != 0)) &&
-                              (id != 0 || ic != 0 && at != 0) || spell.Name.ContainsText(name)
+                               (at == 0 || ((uint)spell.Attributes & at) != 0 || ((uint)spell.AttributesEx & at) != 0 ||
+                                ((uint)spell.AttributesEx2 & at) != 0 || ((uint)spell.AttributesEx3 & at) != 0 ||
+                                ((uint)spell.AttributesEx4 & at) != 0 || ((uint)spell.AttributesEx5 & at) != 0 ||
+                                ((uint)spell.AttributesEx6 & at) != 0 || ((uint)spell.AttributesEx7 & at) != 0 ||
+                                ((uint)spell.AttributesEx8 & at) != 0 || ((uint)spell.AttributesEx9 & at) != 0 ||
+                                ((uint)spell.AttributesEx10 & at) != 0 || ((uint)spell.AttributesEx11 & at) != 0 ||
+                                ((uint)spell.AttributesEx12 & at) != 0 || ((uint)spell.AttributesEx13 & at) != 0 ||
+                                ((uint)spell.AttributesEx14 & at) != 0 || ((uint)spell.AttributesEx15 & at) != 0 ||
+                                ((uint)spell.AttributesEx16 & at) != 0)) &&
+                              ((id != 0 || ic != 0 && at != 0) || spell.Name.ContainsText(name))
                           orderby spell.ID
                           select spell).ToList();
 
@@ -86,7 +91,7 @@ namespace SpellWork.Forms
                           select spell).ToList();
 
             _lvSpellList.VirtualListSize = _spellList.Count();
-            groupBox2.Text = @"Spell Filter " + @"count: " + _spellList.Count();
+            groupBox2.Text = @"Spell Filter count: " + _spellList.Count();
 
             if (_lvSpellList.SelectedIndices.Count > 0)
                 _lvSpellList.Items[_lvSpellList.SelectedIndices[0]].Selected = false;
@@ -115,7 +120,7 @@ namespace SpellWork.Forms
 
         private void SpellListRetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
         {
-            e.Item = new ListViewItem(new[] { _spellList[e.ItemIndex].ID.ToString(), _spellList[e.ItemIndex].NameAndSubname, (_spellList[e.ItemIndex].Misc?.ID ?? 0).ToString() });
+            e.Item = new ListViewItem([string.Empty, _spellList[e.ItemIndex].ID.ToString(), _spellList[e.ItemIndex].NameAndSubname]);
         }
 
         private void ButtonSearch_Click(object sender, EventArgs e)

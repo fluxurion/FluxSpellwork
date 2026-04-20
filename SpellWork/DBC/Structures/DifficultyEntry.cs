@@ -10,14 +10,15 @@ namespace SpellWork.DBC.Structures
         public byte InstanceType;
         public byte OrderIndex;
         public sbyte OldEnumValue;
-        public byte FallbackDifficultyID;
+        public short FallbackDifficultyID;
         public byte MinPlayers;
         public byte MaxPlayers;
-        public ushort Flags;
+        public int Flags;
         public byte ItemContext;
-        public byte ToggleDifficultyID;
-        public ushort GroupSizeHealthCurveID;
-        public ushort GroupSizeDmgCurveID;
-        public ushort GroupSizeSpellPointsCurveID;
+        public short ToggleDifficultyID;
+        public uint GroupSizeHealthCurveID;
+        public uint GroupSizeDmgCurveID;
+        public uint GroupSizeSpellPointsCurveID;
+        public int Unknown1105;
     }
 }

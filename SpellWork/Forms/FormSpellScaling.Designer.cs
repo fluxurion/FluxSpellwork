@@ -158,6 +158,8 @@
             // 
             // _cbMap
             // 
+            this._cbMap.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbMap.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbMap.DataSource = this._mapDataBindingSource;
             this._cbMap.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbMap.FormattingEnabled = true;
@@ -178,6 +180,8 @@
             // 
             // _cbDifficulty
             // 
+            this._cbDifficulty.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbDifficulty.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbDifficulty.DataSource = this._difficultyDataBindingSource;
             this._cbDifficulty.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbDifficulty.FormattingEnabled = true;

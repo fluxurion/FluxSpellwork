@@ -16,6 +16,7 @@ namespace SpellWork.DBC.Structures
         public float PlayerSecondaryStat;
         public float ArmorConstant;
         public float CreatureSpellDamage;
+        public int ContentSetID;
         public uint Lvl;
     }
 }

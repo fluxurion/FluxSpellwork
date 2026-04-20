@@ -6,11 +6,12 @@ namespace SpellWork.DBC.Structures
     {
         [Index(true)]
         public uint ID;
-        [Cardinality(15)]
-        public int[] Attributes = new int[15];
-        public byte DifficultyID;
+        [Cardinality(17)]
+        public int[] Attributes = new int[17];
+        public short DifficultyID;
         public ushort CastingTimeIndex;
         public ushort DurationIndex;
+        public ushort PvPDurationIndex;
         public ushort RangeIndex;
         public byte SchoolMask;
         public float Speed;

@@ -18,6 +18,8 @@
         public float Monk;
         public float DemonHunter;
         public float Evoker;
+        public float Adventurer;
+        public float Traveler;
         public float Item;
         public float Consumable;
         public float Gem1;
@@ -26,6 +28,7 @@
         public float Health;
         public float DamageReplaceStat;
         public float DamageSecondary;
+        public float ManaConsumable;
         // ReSharper restore MemberCanBePrivate.Global
 
         public float GetColumnForClass(int scalingClass)
@@ -46,6 +49,8 @@
                 case 11: return Druid;
                 case 12: return DemonHunter;
                 case 13: return Evoker;
+                case 14: return Adventurer;
+                case 15: return Traveler;
                 case -1: return Item;
                 case -2: return Consumable;
                 case -3: return Gem1;
@@ -55,6 +60,7 @@
                 case -7: return Item;
                 case -8: return DamageReplaceStat;
                 case -9: return DamageSecondary;
+                case -10: return ManaConsumable;
                 default:
                     break;
             }

@@ -57,9 +57,9 @@
             _rtSpellInfo = new System.Windows.Forms.RichTextBox();
             groupBox1 = new System.Windows.Forms.GroupBox();
             _lvSpellList = new System.Windows.Forms.ListView();
+            chPadding = new System.Windows.Forms.ColumnHeader();
             chSpellID = new System.Windows.Forms.ColumnHeader();
             chSpellName = new System.Windows.Forms.ColumnHeader();
-            chMiscID = new System.Windows.Forms.ColumnHeader();
             _gSpellFilter = new System.Windows.Forms.GroupBox();
             _gbAdvansedSearch = new System.Windows.Forms.GroupBox();
             _cbAdvancedFilter2CompareType = new System.Windows.Forms.ComboBox();
@@ -557,14 +557,14 @@
             // 
             _lvSpellList.AllowColumnReorder = true;
             _lvSpellList.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            _lvSpellList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { chSpellID, chSpellName, chMiscID });
+            _lvSpellList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { chPadding, chSpellID, chSpellName });
             _lvSpellList.FullRowSelect = true;
             _lvSpellList.GridLines = true;
-            _lvSpellList.Location = new System.Drawing.Point(7, 405);
+            _lvSpellList.Location = new System.Drawing.Point(4, 405);
             _lvSpellList.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             _lvSpellList.MultiSelect = false;
             _lvSpellList.Name = "_lvSpellList";
-            _lvSpellList.Size = new System.Drawing.Size(398, 409);
+            _lvSpellList.Size = new System.Drawing.Size(400, 409);
             _lvSpellList.TabIndex = 7;
             _lvSpellList.UseCompatibleStateImageBehavior = false;
             _lvSpellList.View = System.Windows.Forms.View.Details;
@@ -572,20 +572,21 @@
             _lvSpellList.RetrieveVirtualItem += LvSpellListRetrieveVirtualItem;
             _lvSpellList.SelectedIndexChanged += LvSpellListSelectedIndexChanged;
             // 
+            // chPadding
+            // 
+            chPadding.Text = "";
+            chPadding.Width = 0;
+            // 
             // chSpellID
             // 
             chSpellID.Text = "ID";
-            chSpellID.Width = 48;
+            chSpellID.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            chSpellID.Width = 64;
             // 
             // chSpellName
             // 
             chSpellName.Text = "Name";
-            chSpellName.Width = 250;
-            // 
-            // chMiscID
-            // 
-            chMiscID.Text = "MiscID";
-            chMiscID.Width = 64;
+            chSpellName.Width = 316;
             // 
             // _gSpellFilter
             // 
@@ -677,6 +678,8 @@
             // _cbAdvancedFilter2
             // 
             _cbAdvancedFilter2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbAdvancedFilter2.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbAdvancedFilter2.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbAdvancedFilter2.DropDownHeight = 500;
             _cbAdvancedFilter2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbAdvancedFilter2.FormattingEnabled = true;
@@ -690,6 +693,8 @@
             // _cbAdvancedFilter1
             // 
             _cbAdvancedFilter1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbAdvancedFilter1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbAdvancedFilter1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbAdvancedFilter1.DropDownHeight = 500;
             _cbAdvancedFilter1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbAdvancedFilter1.FormattingEnabled = true;
@@ -747,6 +752,8 @@
             // _cbAdvancedEffectFilter2
             // 
             _cbAdvancedEffectFilter2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            _cbAdvancedEffectFilter2.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbAdvancedEffectFilter2.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbAdvancedEffectFilter2.DropDownHeight = 500;
             _cbAdvancedEffectFilter2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbAdvancedEffectFilter2.FormattingEnabled = true;
@@ -760,6 +767,8 @@
             // _cbAdvancedEffectFilter1
             // 
             _cbAdvancedEffectFilter1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            _cbAdvancedEffectFilter1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbAdvancedEffectFilter1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbAdvancedEffectFilter1.DropDownHeight = 500;
             _cbAdvancedEffectFilter1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbAdvancedEffectFilter1.FormattingEnabled = true;
@@ -773,6 +782,8 @@
             // _cbTarget2
             // 
             _cbTarget2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbTarget2.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbTarget2.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbTarget2.DropDownHeight = 500;
             _cbTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbTarget2.DropDownWidth = 302;
@@ -788,6 +799,8 @@
             // _cbTarget1
             // 
             _cbTarget1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbTarget1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbTarget1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbTarget1.DropDownHeight = 500;
             _cbTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbTarget1.DropDownWidth = 302;
@@ -803,6 +816,8 @@
             // _cbSpellEffect
             // 
             _cbSpellEffect.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbSpellEffect.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbSpellEffect.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbSpellEffect.DropDownHeight = 500;
             _cbSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbSpellEffect.DropDownWidth = 302;
@@ -819,6 +834,8 @@
             // _cbSpellAura
             // 
             _cbSpellAura.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbSpellAura.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbSpellAura.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbSpellAura.DropDownHeight = 500;
             _cbSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbSpellAura.DropDownWidth = 302;
@@ -834,6 +851,8 @@
             // _cbSpellFamilyName
             // 
             _cbSpellFamilyName.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbSpellFamilyName.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbSpellFamilyName.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbSpellFamilyName.DropDownHeight = 500;
             _cbSpellFamilyName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbSpellFamilyName.DropDownWidth = 302;
@@ -1156,6 +1175,8 @@
             // 
             // _cbProcFitstSpellFamily
             // 
+            _cbProcFitstSpellFamily.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbProcFitstSpellFamily.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbProcFitstSpellFamily.DropDownHeight = 500;
             _cbProcFitstSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbProcFitstSpellFamily.FormattingEnabled = true;
@@ -1506,6 +1527,8 @@
             // _cbProcTarget2
             // 
             _cbProcTarget2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            _cbProcTarget2.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbProcTarget2.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbProcTarget2.DropDownHeight = 500;
             _cbProcTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbProcTarget2.FormattingEnabled = true;
@@ -1520,6 +1543,8 @@
             // _cbProcTarget1
             // 
             _cbProcTarget1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbProcTarget1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbProcTarget1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbProcTarget1.DropDownHeight = 500;
             _cbProcTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbProcTarget1.FormattingEnabled = true;
@@ -1534,6 +1559,8 @@
             // _cbProcSpellEffect
             // 
             _cbProcSpellEffect.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbProcSpellEffect.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbProcSpellEffect.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbProcSpellEffect.DropDownHeight = 500;
             _cbProcSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbProcSpellEffect.FormattingEnabled = true;
@@ -1548,6 +1575,8 @@
             // _cbProcSpellAura
             // 
             _cbProcSpellAura.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbProcSpellAura.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbProcSpellAura.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbProcSpellAura.DropDownHeight = 500;
             _cbProcSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbProcSpellAura.FormattingEnabled = true;
@@ -1562,6 +1591,8 @@
             // _cbProcSpellFamilyName
             // 
             _cbProcSpellFamilyName.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
+            _cbProcSpellFamilyName.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbProcSpellFamilyName.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbProcSpellFamilyName.DropDownHeight = 500;
             _cbProcSpellFamilyName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbProcSpellFamilyName.FormattingEnabled = true;
@@ -1791,6 +1822,8 @@
             // 
             // _cbSqlSpellFamily
             // 
+            _cbSqlSpellFamily.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            _cbSqlSpellFamily.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             _cbSqlSpellFamily.DropDownHeight = 500;
             _cbSqlSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             _cbSqlSpellFamily.FormattingEnabled = true;
@@ -2184,9 +2217,9 @@
         private System.Windows.Forms.RichTextBox _rtSpellInfo;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ListView _lvSpellList;
+        private System.Windows.Forms.ColumnHeader chPadding;
         private System.Windows.Forms.ColumnHeader chSpellID;
         private System.Windows.Forms.ColumnHeader chSpellName;
-        private System.Windows.Forms.ColumnHeader chMiscID;
         private System.Windows.Forms.GroupBox _gSpellFilter;
         private System.Windows.Forms.GroupBox _gbAdvansedSearch;
         private System.Windows.Forms.ComboBox _cbAdvancedFilter2CompareType;

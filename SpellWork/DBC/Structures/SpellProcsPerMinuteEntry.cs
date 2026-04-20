@@ -7,6 +7,6 @@ namespace SpellWork.DBC.Structures
         [Index(true)]
         public uint ID;
         public float BaseProcRate;
-        public byte Flags;
+        public int Flags;
     }
 }

@@ -8,7 +8,7 @@ namespace SpellWork.DBC.Structures
         public uint ID;
         public string DisplayName;
         public string DisplayNameShort;
-        public byte Flags;
+        public int Flags;
         [Cardinality(2)]
         public float[] MinRange = new float[2];
         [Cardinality(2)]

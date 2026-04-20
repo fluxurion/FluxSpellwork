@@ -6,7 +6,7 @@ namespace SpellWork.DBC.Structures
     {
         [Index(true)]
         public uint ID;
-        public byte DifficultyID;
+        public short DifficultyID;
         public ushort CumulativeAura;
         public int ProcCategoryRecovery;
         public byte ProcChance;

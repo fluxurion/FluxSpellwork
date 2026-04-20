@@ -14,15 +14,19 @@ namespace SpellWork.DBC.Structures
         public string Display;
         public int ExpansionID;
         public float DmgVariance;
-        public int InstanceBound;
+        public int LimitCategory;
         public uint DurationInInventory;
         public float QualityModifier;
         public uint BagFamily;
+        public int StartQuestID;
+        public int LanguageID;
         public float ItemRange;
         [Cardinality(10)]
         public float[] StatPercentageOfSocket = new float[10];
         [Cardinality(10)]
         public int[] StatPercentEditor = new int[10];
+        [Cardinality(10)]
+        public int[] StatModifierBonusStat = new int[10];
         public int Stackable;
         public int MaxCount;
         public int MinReputation;
@@ -32,24 +36,26 @@ namespace SpellWork.DBC.Structures
         public uint VendorStackCount;
         public float PriceVariance;
         public float PriceRandomValue;
-        [Cardinality(4)]
-        public int[] Flags = new int[4];
+        [Cardinality(5)]
+        public int[] Flags = new int[5];
         public int FactionRelated;
         public int ModifiedCraftingReagentItemID;
         public int ContentTuningID;
         public int PlayerLevelToItemLevelCurveID;
+        public int ItemLevelOffsetCurveID;
+        public int ItemLevelOffsetItemLevel;
+        public int Unknown1127;
         public ushort ItemNameDescriptionID;
         public ushort RequiredTransmogHoliday;
         public ushort RequiredHoliday;
-        public ushort LimitCategory;
         public ushort GemProperties;
         public ushort SocketMatchEnchantmentId;
         public ushort TotemCategoryID;
+        public ushort InstanceBound;
         [Cardinality(2)]
         public ushort[] ZoneBound = new ushort[2];
         public ushort ItemSet;
         public ushort LockID;
-        public ushort StartQuestID;
         public ushort PageID;
         public ushort ItemDelay;
         public ushort MinFactionID;
@@ -65,16 +71,13 @@ namespace SpellWork.DBC.Structures
         public byte SheatheType;
         public byte Material;
         public byte PageMaterialID;
-        public byte LanguageID;
         public byte Bonding;
         public byte DamageDamageType;
-        [Cardinality(10)]
-        public sbyte[] StatModifierBonusStat = new sbyte[10];
         public byte ContainerSlots;
         public byte RequiredPVPMedal;
-        public byte RequiredPVPRank;
+        public sbyte RequiredPVPRank;
         public sbyte RequiredLevel;
-        public byte InventoryType;
-        public byte OverallQualityID;
+        public sbyte InventoryType;
+        public sbyte OverallQualityID;
     }
 }

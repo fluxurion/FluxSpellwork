@@ -8,5 +8,6 @@ namespace SpellWork.DBC.Structures
         public uint ID;
         public int Duration;
         public int MaxDuration;
+        public int DurationPerResource;
     }
 }

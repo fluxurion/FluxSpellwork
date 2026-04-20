@@ -6,7 +6,7 @@ namespace SpellWork.DBC.Structures
     {
         [Index(true)]
         public uint ID;
-        public int DifficultyID;
+        public short DifficultyID;
         public int CasterAuraState;
         public int TargetAuraState;
         public int ExcludeCasterAuraState;
@@ -15,10 +15,10 @@ namespace SpellWork.DBC.Structures
         public int TargetAuraSpell;
         public int ExcludeCasterAuraSpell;
         public int ExcludeTargetAuraSpell;
-        public int CasterAuraType;
-        public int TargetAuraType;
-        public int ExcludeCasterAuraType;
-        public int ExcludeTargetAuraType;
+        public short CasterAuraType;
+        public short TargetAuraType;
+        public short ExcludeCasterAuraType;
+        public short ExcludeTargetAuraType;
         public int SpellID;
     }
 }

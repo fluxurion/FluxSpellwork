@@ -6,8 +6,8 @@ namespace SpellWork.DBC.Structures
     {
         [Index(true)]
         public uint ID;
-        public byte DifficultyID;
-        public short InterruptFlags;
+        public short DifficultyID;
+        public int InterruptFlags;
         [Cardinality(2)]
         public int[] AuraInterruptFlags = new int[2];
         [Cardinality(2)]

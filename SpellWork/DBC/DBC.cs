@@ -19,8 +19,8 @@ namespace SpellWork.DBC
 {
     public static class DBC
     {
-        public const string Version = "SpellWork 10.2.5 (52902)";
-        public const uint MaxLevel = 70;
+        public const string Version = "SpellWork 12.0.0 (65390)";
+        public const uint MaxLevel = 80;
         public const uint MaxItemLevel = 1300;
 
         public static Storage<AreaGroupMemberEntry>             AreaGroupMember { get; set; }
@@ -46,6 +46,9 @@ namespace SpellWork.DBC
 
         public static readonly IDictionary<int, SpellInfo> SpellInfoStore = new ConcurrentDictionary<int, SpellInfo>();
         public static readonly IDictionary<int, ISet<int>> SpellTriggerStore = new Dictionary<int, ISet<int>>();
+
+        public static readonly IDictionary<uint, ISet<SpellInfo>> SpellModifyStoreByFamily = new Dictionary<uint, ISet<SpellInfo>>();
+        public static readonly IDictionary<uint, ISet<SpellInfo>> SpellModifyStoreByLabel = new Dictionary<uint, ISet<SpellInfo>>();
 
         private enum Progress
         {
@@ -128,6 +131,9 @@ namespace SpellWork.DBC
                         if (SpellDuration.TryGetValue(spellMisc.DurationIndex, out var durationEntry))
                             spell.DurationEntry = durationEntry;
 
+                        if (SpellDuration.TryGetValue(spellMisc.PvPDurationIndex, out var pvpDurationEntry))
+                            spell.PvpDurationEntry = pvpDurationEntry;
+
                         if (SpellRange.TryGetValue(spellMisc.RangeIndex, out var rangeEntry))
                             spell.Range = rangeEntry;
                     }
@@ -148,13 +154,22 @@ namespace SpellWork.DBC
                         spellInfo.SpellEffectInfoStore.Add(new SpellEffectInfo(effect)); // Helper
 
                         var triggerId = effect.EffectTriggerSpell;
-                        if (triggerId == 0)
-                            continue;
+                        if (triggerId != 0)
+                        {
+                            if (SpellTriggerStore.TryGetValue(triggerId, out var trigger))
+                                trigger.Add(effect.SpellID);
+                            else
+                                SpellTriggerStore.Add(triggerId, new SortedSet<int> { effect.SpellID });
+                        }
 
-                        if (SpellTriggerStore.TryGetValue(triggerId, out var trigger))
-                            trigger.Add(effect.SpellID);
-                        else
-                            SpellTriggerStore.Add(triggerId, new SortedSet<int> { effect.SpellID });
+                        var spellLabelAffectingOtherSpells = SpellInfo.GetSpellLabelAffectingOtherSpells(effect);
+                        if (spellLabelAffectingOtherSpells.HasValue)
+                        {
+                            if (SpellModifyStoreByLabel.TryGetValue(spellLabelAffectingOtherSpells.Value, out var spells))
+                                spells.Add(spellInfo);
+                            else
+                                SpellModifyStoreByLabel.Add(spellLabelAffectingOtherSpells.Value, new SortedSet<SpellInfo>(SpellInfo.Comparer.Instance){ spellInfo });
+                        }
                     }
                     progressHandler.IncrementStepsProgress();
                 },
@@ -301,6 +316,11 @@ namespace SpellWork.DBC
                         }
 
                         spellInfo.ClassOptions = classOptions;
+
+                        if (SpellModifyStoreByFamily.TryGetValue(classOptions.SpellClassSet, out var spells))
+                            spells.Add(spellInfo);
+                        else
+                            SpellModifyStoreByFamily.Add(classOptions.SpellClassSet, new SortedSet<SpellInfo>(SpellInfo.Comparer.Instance){ spellInfo });
                     }
                     progressHandler.IncrementStepsProgress();
                 },

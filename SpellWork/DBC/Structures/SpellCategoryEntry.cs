@@ -7,9 +7,9 @@ namespace SpellWork.DBC.Structures
         [Index(true)]
         public uint ID;
         public string Name;
-        public sbyte Flags;
-        public byte UsesPerWeek;
-        public sbyte MaxCharges;
+        public int Flags;
+        public int UsesPerWeek;
+        public int MaxCharges;
         public int ChargeRecoveryTime;
         public int TypeMask;
     };

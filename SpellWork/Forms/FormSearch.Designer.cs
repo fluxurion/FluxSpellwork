@@ -42,9 +42,9 @@
             this._tbIcon = new System.Windows.Forms.TextBox();
             this._tbIdName = new System.Windows.Forms.TextBox();
             this._lvSpellList = new System.Windows.Forms.ListView();
+            this._chPadding = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._chID = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._chName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this._chMiscID = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this._cbTarget2 = new System.Windows.Forms.ComboBox();
             this._cbTarget1 = new System.Windows.Forms.ComboBox();
@@ -206,9 +206,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this._lvSpellList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this._chPadding,
             this._chID,
-            this._chName,
-            this._chMiscID});
+            this._chName});
             this._lvSpellList.FullRowSelect = true;
             this._lvSpellList.GridLines = true;
             this._lvSpellList.HideSelection = false;
@@ -223,20 +223,21 @@
             this._lvSpellList.SelectedIndexChanged += new System.EventHandler(this.SpellListSelectedIndexChanged);
             this._lvSpellList.DoubleClick += new System.EventHandler(this.OkClick);
             // 
+            // _chPadding
+            // 
+            this._chPadding.Text = "";
+            this._chPadding.Width = 0;
+            // 
             // _chID
             // 
             this._chID.Text = "ID";
-            this._chID.Width = 48;
+            this._chID.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this._chID.Width = 64;
             // 
             // _chName
             // 
             this._chName.Text = "Name";
-            this._chName.Width = 213;
-            // 
-            // _chMiscID
-            // 
-            this._chMiscID.Text = "MiscID";
-            this._chMiscID.Width = 64;
+            this._chName.Width = 301;
             // 
             // groupBox2
             // 
@@ -257,6 +258,8 @@
             // _cbTarget2
             // 
             this._cbTarget2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this._cbTarget2.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbTarget2.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbTarget2.DropDownHeight = 500;
             this._cbTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbTarget2.FormattingEnabled = true;
@@ -270,6 +273,8 @@
             // _cbTarget1
             // 
             this._cbTarget1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this._cbTarget1.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbTarget1.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbTarget1.DropDownHeight = 500;
             this._cbTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbTarget1.FormattingEnabled = true;
@@ -283,6 +288,8 @@
             // _cbSpellEffect
             // 
             this._cbSpellEffect.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this._cbSpellEffect.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbSpellEffect.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbSpellEffect.DropDownHeight = 500;
             this._cbSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbSpellEffect.FormattingEnabled = true;
@@ -296,6 +303,8 @@
             // _cbSpellAura
             // 
             this._cbSpellAura.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this._cbSpellAura.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbSpellAura.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbSpellAura.DropDownHeight = 500;
             this._cbSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbSpellAura.FormattingEnabled = true;
@@ -309,6 +318,8 @@
             // _cbSpellFamily
             // 
             this._cbSpellFamily.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this._cbSpellFamily.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this._cbSpellFamily.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this._cbSpellFamily.DropDownHeight = 500;
             this._cbSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._cbSpellFamily.FormattingEnabled = true;
@@ -350,9 +361,9 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.ListView _lvSpellList;
         private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.ColumnHeader _chPadding;
         private System.Windows.Forms.ColumnHeader _chID;
         private System.Windows.Forms.ColumnHeader _chName;
-        private System.Windows.Forms.ColumnHeader _chMiscID;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label _lIDName;
