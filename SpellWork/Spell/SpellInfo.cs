@@ -120,8 +120,8 @@ namespace SpellWork.Spell
         #endregion
 
         #region
-        public int ChargeRecoveryTime => DBC.DBC.SpellCategory.TryGetValue(ChargeCategory, out var category) ? category.ChargeRecoveryTime : 0;
-        public sbyte MaxCharges => DBC.DBC.SpellCategory.TryGetValue(ChargeCategory, out var category) ? category.MaxCharges : (sbyte)0;
+        public int ChargeRecoveryTime => DBC.DBC.SpellCategory != null && DBC.DBC.SpellCategory.TryGetValue(ChargeCategory, out var category) ? category.ChargeRecoveryTime : 0;
+        public sbyte MaxCharges => DBC.DBC.SpellCategory != null && DBC.DBC.SpellCategory.TryGetValue(ChargeCategory, out var category) ? category.MaxCharges : (sbyte)0;
         #endregion
 
         #region SpellShapeshift
@@ -776,7 +776,7 @@ namespace SpellWork.Spell
                         contentTuningId = DBC.DBC.SelectedMapDifficulty.ContentTuningID;
 
                     var expansion = -2;
-                    if (DBC.DBC.ContentTuning.TryGetValue(contentTuningId, out var contentTuning))
+                    if (DBC.DBC.ContentTuning != null && DBC.DBC.ContentTuning.TryGetValue(contentTuningId, out var contentTuning))
                         expansion = contentTuning.ExpansionID;
 
                     value = ExpectedStat.Evaluate(stat, DBC.DBC.SelectedLevel, expansion, contentTuningId, 0, Classes.CLASS_NONE) * value / 100.0f;

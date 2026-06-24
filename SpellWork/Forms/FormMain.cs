@@ -104,6 +104,20 @@ namespace SpellWork.Forms
             RefreshConnectionStatus();
         }
 
+        private void ChangeSetupClick(object sender, EventArgs e)
+        {
+            var setup = new FormSetup();
+            if (setup.ShowDialog(this) == System.Windows.Forms.DialogResult.OK)
+            {
+                MessageBox.Show(
+                    "Settings saved. The application will now restart to apply changes.",
+                    "Restart Required",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                System.Windows.Forms.Application.Restart();
+            }
+        }
+
         private void FormMainResize(object sender, EventArgs e)
         {
             try

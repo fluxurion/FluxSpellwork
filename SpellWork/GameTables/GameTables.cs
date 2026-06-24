@@ -37,6 +37,9 @@ namespace SpellWork.GameTables
                     var fieldIndex = 0;
                     foreach (var field in typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance))
                     {
+                        if (fieldIndex >= lineTokens.Length)
+                            break;
+
                         // ReSharper disable once SwitchStatementMissingSomeCases
                         switch (Type.GetTypeCode(field.FieldType))
                         {

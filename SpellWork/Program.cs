@@ -25,13 +25,29 @@ namespace SpellWork
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            var dbcPath = $"{Settings.Default.DbcPath}\\{Settings.Default.Locale}";
-            if (!Directory.Exists(dbcPath))
-            {
-                MessageBox.Show($"Files in {Path.GetFullPath(dbcPath)} missing", @"Missing files", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            if (!EnsureSetup())
                 return;
+
+            RunMainForm();
+        }
+
+        public static bool EnsureSetup()
+        {
+            var dbcPath = Path.Combine(Settings.Default.DbcPath, Settings.Default.Locale);
+            var needsSetup = string.IsNullOrEmpty(Settings.Default.GameVersion) || !Directory.Exists(dbcPath);
+
+            if (needsSetup)
+            {
+                var setup = new FormSetup();
+                if (setup.ShowDialog() != DialogResult.OK)
+                    return false;
             }
 
+            return true;
+        }
+
+        public static void RunMainForm()
+        {
             try
             {
                 var mainForm = new FormMain();
@@ -47,7 +63,9 @@ namespace SpellWork
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("Error while loading DBC: " + ex.Message);
+                        var inner = ex;
+                        while (inner.InnerException != null) inner = inner.InnerException;
+                        MessageBox.Show($"Error while loading DBC:\n{ex.Message}\n\nCause: {inner.GetType().Name}: {inner.Message}");
                     }
                     finally
                     {

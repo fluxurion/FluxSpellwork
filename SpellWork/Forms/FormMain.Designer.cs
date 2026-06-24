@@ -35,6 +35,7 @@ namespace SpellWork.Forms
             menuStrip1 = new System.Windows.Forms.MenuStrip();
             _tsmFile = new System.Windows.Forms.ToolStripMenuItem();
             _tsmSettings = new System.Windows.Forms.ToolStripMenuItem();
+            _tsmChangeSetup = new System.Windows.Forms.ToolStripMenuItem();
             _tsmExit = new System.Windows.Forms.ToolStripMenuItem();
             _ilPro = new System.Windows.Forms.ImageList(components);
             splitContainer7 = new System.Windows.Forms.SplitContainer();
@@ -282,7 +283,7 @@ namespace SpellWork.Forms
             // 
             // _tsmFile
             // 
-            _tsmFile.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { _tsmSettings, _tsmExit });
+            _tsmFile.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { _tsmSettings, _tsmChangeSetup, _tsmExit });
             _tsmFile.Name = "_tsmFile";
             _tsmFile.Size = new System.Drawing.Size(37, 20);
             _tsmFile.Text = "File";
@@ -290,9 +291,16 @@ namespace SpellWork.Forms
             // _tsmSettings
             // 
             _tsmSettings.Name = "_tsmSettings";
-            _tsmSettings.Size = new System.Drawing.Size(116, 22);
+            _tsmSettings.Size = new System.Drawing.Size(175, 22);
             _tsmSettings.Text = "Settings";
             _tsmSettings.Click += SettingsClick;
+            // 
+            // _tsmChangeSetup
+            // 
+            _tsmChangeSetup.Name = "_tsmChangeSetup";
+            _tsmChangeSetup.Size = new System.Drawing.Size(175, 22);
+            _tsmChangeSetup.Text = "Change Version / DB2 Path";
+            _tsmChangeSetup.Click += ChangeSetupClick;
             // 
             // _tsmExit
             // 
@@ -2313,6 +2321,7 @@ namespace SpellWork.Forms
         private System.Windows.Forms.Button _bCopySpellInfo;
         private System.Windows.Forms.ToolStripMenuItem _tsmFile;
         private System.Windows.Forms.ToolStripMenuItem _tsmSettings;
+        private System.Windows.Forms.ToolStripMenuItem _tsmChangeSetup;
         private System.Windows.Forms.ToolStripMenuItem _tsmExit;
         private System.Windows.Forms.Button _bSpellScript;
         private System.Windows.Forms.Button _bLevelScaling;
