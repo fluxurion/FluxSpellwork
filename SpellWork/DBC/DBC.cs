@@ -3,6 +3,7 @@ using SpellWork.Database;
 using SpellWork.DBC.Structures;
 using SpellWork.DBC.Structures.V7;
 using SpellWork.DBC.Structures.V8;
+using SpellWork.DBC.Structures.V12;
 using SpellWork.Extensions;
 using SpellWork.GameTables;
 using SpellWork.GameTables.Structures;
@@ -90,6 +91,12 @@ namespace SpellWork.DBC
             if (Settings.Default.GameVersion == "8.x")
             {
                 await LoadV8(progressCallback);
+                return;
+            }
+
+            if (Settings.Default.GameVersion == "12.x")
+            {
+                await LoadV12(progressCallback);
                 return;
             }
 
@@ -982,6 +989,389 @@ namespace SpellWork.DBC
                         if (itemSparseV8 != null && itemSparseV8.TryGetValue(e8.ParentItemID, out var item))
                             canonical.Item = item;
                         SpellInfoStore[e8.SpellID].ItemEffects.Add(canonical);
+                    }
+                })
+            );
+
+            progressHandler.SetProgress(90);
+
+            MySqlConnection.LoadServersideSpells();
+
+            progressHandler.SetProgress(95);
+
+            GameTable<GtSpellScalingEntry>.Open($@"{Settings.Default.GtPath}\SpellScaling.txt");
+
+            progressHandler.SetProgress(100);
+        }
+
+        // Copies every public field with a matching name from a versioned structure into a
+        // canonical one, converting numeric types and arrays as needed.
+        private static TDst ConvertEntry<TSrc, TDst>(TSrc src) where TDst : class, new()
+        {
+            if (src == null)
+                return null;
+
+            var dst = new TDst();
+            foreach (var srcField in typeof(TSrc).GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var dstField = typeof(TDst).GetField(srcField.Name, BindingFlags.Public | BindingFlags.Instance);
+                if (dstField == null)
+                    continue;
+
+                var value = srcField.GetValue(src);
+                if (value == null)
+                    continue;
+
+                try
+                {
+                    if (srcField.FieldType.IsArray && dstField.FieldType.IsArray)
+                    {
+                        var srcArr = (Array)value;
+                        var dstElem = dstField.FieldType.GetElementType();
+                        var dstArr = Array.CreateInstance(dstElem, srcArr.Length);
+                        for (var i = 0; i < srcArr.Length; ++i)
+                            dstArr.SetValue(Convert.ChangeType(srcArr.GetValue(i), dstElem), i);
+                        dstField.SetValue(dst, dstArr);
+                    }
+                    else if (srcField.FieldType == dstField.FieldType)
+                    {
+                        dstField.SetValue(dst, value);
+                    }
+                    else if (!srcField.FieldType.IsArray && !dstField.FieldType.IsArray)
+                    {
+                        dstField.SetValue(dst, Convert.ChangeType(value, dstField.FieldType));
+                    }
+                }
+                catch (Exception ex) when (ex is InvalidCastException || ex is OverflowException || ex is FormatException)
+                {
+                    Console.WriteLine($"[ConvertEntry] {typeof(TSrc).Name}.{srcField.Name} -> {typeof(TDst).Name}: {ex.Message}");
+                }
+            }
+            return dst;
+        }
+
+        private static Storage<TDst> ConvertStorage<TSrc, TDst>(Storage<TSrc> src)
+            where TSrc : class, new() where TDst : class, new()
+        {
+            var dst = new Storage<TDst>();
+            if (src == null)
+                return dst;
+            foreach (var kv in src)
+                dst[kv.Key] = ConvertEntry<TSrc, TDst>(kv.Value);
+            return dst;
+        }
+
+        private static Storage<T> LoadV12DB2<T>(string name, HotfixReader hotfixReader) where T : class, new()
+        {
+            try
+            {
+                return CreateInstance<Storage<T>>(name, hotfixReader);
+            }
+            catch (Exception ex)
+            {
+                var msg = ex is System.Reflection.TargetInvocationException tie ? (tie.InnerException?.Message ?? ex.Message) : ex.Message;
+                Console.WriteLine($"[LoadV12] Could not load {name}.db2: {msg}");
+                return null;
+            }
+        }
+
+        private static async Task LoadV12(Action<int> progressCallback)
+        {
+            var progressHandler = new ProgressHandler(progressCallback);
+
+            HotfixReader hotfixReader = null;
+            try
+            {
+                hotfixReader = new HotfixReader(Settings.Default.HotfixCachePath);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Hotfix cache {Settings.Default.HotfixCachePath} cannot be loaded, ignoring!");
+            }
+
+            progressHandler.SetProgress(5);
+
+            // --- Shared tables; 12.x layouts converted into canonical structs ---
+            AreaGroupMember        = ConvertStorage<AreaGroupMemberEntryV12, AreaGroupMemberEntry>(LoadV12DB2<AreaGroupMemberEntryV12>("AreaGroupMember", hotfixReader));
+            AreaTable              = ConvertStorage<AreaTableEntryV12, AreaTableEntry>(LoadV12DB2<AreaTableEntryV12>("AreaTable", hotfixReader));
+            ContentTuning          = ConvertStorage<ContentTuningEntryV12, ContentTuningEntry>(LoadV12DB2<ContentTuningEntryV12>("ContentTuning", hotfixReader));
+            ContentTuningXExpected = LoadV12DB2<ContentTuningXExpectedEntry>("ContentTuningXExpected", hotfixReader);
+            CraftingData           = new Storage<CraftingDataEntry>(); // table removed in 12.x
+            Difficulty             = ConvertStorage<DifficultyEntryV12, DifficultyEntry>(LoadV12DB2<DifficultyEntryV12>("Difficulty", hotfixReader));
+            ExpectedStat           = ConvertStorage<ExpectedStatEntryV12, ExpectedStatEntry>(LoadV12DB2<ExpectedStatEntryV12>("ExpectedStat", hotfixReader));
+            ExpectedStatMod        = LoadV12DB2<ExpectedStatModEntry>("ExpectedStatMod", hotfixReader);
+            Map                    = ConvertStorage<MapEntryV12, MapEntry>(LoadV12DB2<MapEntryV12>("Map", hotfixReader));
+            MapDifficulty          = ConvertStorage<MapDifficultyEntryV12, MapDifficultyEntry>(LoadV12DB2<MapDifficultyEntryV12>("MapDifficulty", hotfixReader));
+            OverrideSpellData      = ConvertStorage<OverrideSpellDataEntryV12, OverrideSpellDataEntry>(LoadV12DB2<OverrideSpellDataEntryV12>("OverrideSpellData", hotfixReader));
+            ScreenEffect           = ConvertStorage<ScreenEffectEntryV12, ScreenEffectEntry>(LoadV12DB2<ScreenEffectEntryV12>("ScreenEffect", hotfixReader));
+            SpellCastTimes         = LoadV12DB2<SpellCastTimesEntry>("SpellCastTimes", hotfixReader);
+            SpellCategory          = ConvertStorage<SpellCategoryEntryV12, SpellCategoryEntry>(LoadV12DB2<SpellCategoryEntryV12>("SpellCategory", hotfixReader));
+            SpellDuration          = ConvertStorage<SpellDurationEntryV12, SpellDurationEntry>(LoadV12DB2<SpellDurationEntryV12>("SpellDuration", hotfixReader));
+            SpellRadius            = LoadV12DB2<SpellRadiusEntry>("SpellRadius", hotfixReader);
+            SpellRange             = ConvertStorage<SpellRangeEntryV12, SpellRangeEntry>(LoadV12DB2<SpellRangeEntryV12>("SpellRange", hotfixReader));
+            RandPropPoints         = LoadV12DB2<RandPropPointsEntry>("RandPropPoints", hotfixReader);
+            SkillLineAbility       = ConvertStorage<SkillLineAbilityEntryV12, SkillLineAbilityEntry>(LoadV12DB2<SkillLineAbilityEntryV12>("SkillLineAbility", hotfixReader));
+            SkillLine              = ConvertStorage<SkillLineEntryV12, SkillLineEntry>(LoadV12DB2<SkillLineEntryV12>("SkillLine", hotfixReader));
+
+            var spellNameV12          = LoadV12DB2<SpellNameEntry>("SpellName", hotfixReader);
+            var spellEntryV12         = LoadV12DB2<SpellEntry>("Spell", hotfixReader);
+            var spellMiscsV12         = LoadV12DB2<SpellMiscEntryV12>("SpellMisc", hotfixReader);
+            var spellEffectsV12       = LoadV12DB2<SpellEffectEntryV12>("SpellEffect", hotfixReader);
+            var spellLevelsV12        = LoadV12DB2<SpellLevelsEntryV12>("SpellLevels", hotfixReader);
+            var spellCooldownsV12     = LoadV12DB2<SpellCooldownsEntryV12>("SpellCooldowns", hotfixReader);
+            var spellScalingV12       = LoadV12DB2<SpellScalingEntryV12>("SpellScaling", hotfixReader);
+            var spellAuraOptionsV12   = LoadV12DB2<SpellAuraOptionsEntryV12>("SpellAuraOptions", hotfixReader);
+            var spellAuraRestV12      = LoadV12DB2<SpellAuraRestrictionsEntryV12>("SpellAuraRestrictions", hotfixReader);
+            var spellCastingReqsV12   = LoadV12DB2<SpellCastingRequirementsEntryV12>("SpellCastingRequirements", hotfixReader);
+            var spellCategoriesV12    = LoadV12DB2<SpellCategoriesEntryV12>("SpellCategories", hotfixReader);
+            var spellClassOptionsV12  = LoadV12DB2<SpellClassOptionsEntry>("SpellClassOptions", hotfixReader);
+            var spellDescVarsV12      = LoadV12DB2<SpellDescriptionVariablesEntry>("SpellDescriptionVariables", hotfixReader);
+            var spellEquippedItemsV12 = LoadV12DB2<SpellEquippedItemsEntryV12>("SpellEquippedItems", hotfixReader);
+            var spellInterruptsV12    = LoadV12DB2<SpellInterruptsEntryV12>("SpellInterrupts", hotfixReader);
+            var spellPowerV12         = LoadV12DB2<SpellPowerEntry>("SpellPower", hotfixReader);
+            var spellProcsPerMinV12   = LoadV12DB2<SpellProcsPerMinuteEntryV12>("SpellProcsPerMinute", hotfixReader);
+            var spellReagentsV12      = LoadV12DB2<SpellReagentsEntry>("SpellReagents", hotfixReader);
+            var spellReagentsCurrV12  = LoadV12DB2<SpellReagentsCurrencyEntryV12>("SpellReagentsCurrency", hotfixReader);
+            var spellShapeshiftV12    = LoadV12DB2<SpellShapeshiftEntry>("SpellShapeshift", hotfixReader);
+            var spellTargetRestV12    = LoadV12DB2<SpellTargetRestrictionsEntryV12>("SpellTargetRestrictions", hotfixReader);
+            var spellTotemsV12        = LoadV12DB2<SpellTotemsEntry>("SpellTotems", hotfixReader);
+            var spellXSpellVisualV12  = LoadV12DB2<SpellXSpellVisualEntryV12>("SpellXSpellVisual", hotfixReader);
+            var spellXDescVarsV12     = LoadV12DB2<SpellXDescriptionVariablesEntry>("SpellXDescriptionVariables", hotfixReader);
+            var spellLabelV12         = LoadV12DB2<SpellLabelEntry>("SpellLabel", hotfixReader);
+            var itemEffectV12         = LoadV12DB2<ItemEffectEntryV12>("ItemEffect", hotfixReader);
+            var itemSparseV12         = LoadV12DB2<ItemSparseEntryV12>("ItemSparse", hotfixReader);
+            var itemXItemEffectV12    = LoadV12DB2<ItemXItemEffectEntry>("ItemXItemEffect", hotfixReader);
+
+            progressHandler.SetProgress(20);
+
+            // --- Build SpellInfoStore from SpellName (12.x uses separate SpellName table) ---
+            if (spellNameV12 == null)
+                throw new DirectoryNotFoundException("SpellName.db2 could not be loaded.");
+
+            foreach (var kv in spellNameV12)
+            {
+                var entry = spellEntryV12?.GetValue((int)kv.Value.ID);
+                SpellInfoStore[(int)kv.Value.ID] = new SpellInfo(kv.Value.Name ?? string.Empty, entry);
+            }
+
+            progressHandler.SetProgress(40);
+
+            await Task.WhenAll(
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellMiscsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellMiscEntryV12>>())
+                    {
+                        var m = kv.Value;
+                        if (m.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(m.SpellID, out var spell)) continue;
+
+                        spell.Misc = ConvertEntry<SpellMiscEntryV12, SpellMiscEntry>(m);
+
+                        if (SpellDuration != null && SpellDuration.TryGetValue(m.DurationIndex, out var dur))
+                            spell.DurationEntry = dur;
+                        if (SpellDuration != null && SpellDuration.TryGetValue(m.PvPDurationIndex, out var pvpDur))
+                            spell.PvpDurationEntry = pvpDur;
+                        if (SpellRange != null && SpellRange.TryGetValue(m.RangeIndex, out var rng))
+                            spell.Range = rng;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellEffectsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellEffectEntryV12>>())
+                    {
+                        var e12 = kv.Value;
+                        if (!SpellInfoStore.TryGetValue(e12.SpellID, out var spellInfo)) continue;
+
+                        var eff = ConvertEntry<SpellEffectEntryV12, SpellEffectEntry>(e12);
+                        spellInfo.SpellEffectInfoStore.Add(new SpellEffectInfo(eff));
+
+                        if (e12.EffectTriggerSpell != 0)
+                        {
+                            if (SpellTriggerStore.TryGetValue(e12.EffectTriggerSpell, out var set))
+                                set.Add(e12.SpellID);
+                            else
+                                SpellTriggerStore.Add(e12.EffectTriggerSpell, new SortedSet<int> { e12.SpellID });
+                        }
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellAuraOptionsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellAuraOptionsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.AuraOptions = ConvertEntry<SpellAuraOptionsEntryV12, SpellAuraOptionsEntry>(kv.Value);
+
+                        if (kv.Value.SpellProcsPerMinuteID != 0 && spellProcsPerMinV12 != null &&
+                            spellProcsPerMinV12.TryGetValue(kv.Value.SpellProcsPerMinuteID, out var ppm))
+                            spell.ProcsPerMinute = ConvertEntry<SpellProcsPerMinuteEntryV12, SpellProcsPerMinuteEntry>(ppm);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellAuraRestV12 ?? Enumerable.Empty<KeyValuePair<int, SpellAuraRestrictionsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.AuraRestrictions = ConvertEntry<SpellAuraRestrictionsEntryV12, SpellAuraRestrictionsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellCategoriesV12 ?? Enumerable.Empty<KeyValuePair<int, SpellCategoriesEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Categories = ConvertEntry<SpellCategoriesEntryV12, SpellCategoriesEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellCooldownsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellCooldownsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Cooldowns = ConvertEntry<SpellCooldownsEntryV12, SpellCooldownsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellInterruptsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellInterruptsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Interrupts = ConvertEntry<SpellInterruptsEntryV12, SpellInterruptsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellLevelsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellLevelsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Levels = ConvertEntry<SpellLevelsEntryV12, SpellLevelsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellScalingV12 ?? Enumerable.Empty<KeyValuePair<int, SpellScalingEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Scaling = ConvertEntry<SpellScalingEntryV12, SpellScalingEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellTargetRestV12 ?? Enumerable.Empty<KeyValuePair<int, SpellTargetRestrictionsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.TargetRestrictions = ConvertEntry<SpellTargetRestrictionsEntryV12, SpellTargetRestrictionsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellCastingReqsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellCastingRequirementsEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.CastingRequirements = ConvertEntry<SpellCastingRequirementsEntryV12, SpellCastingRequirementsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellClassOptionsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellClassOptionsEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.ClassOptions = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellEquippedItemsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellEquippedItemsEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.EquippedItems = ConvertEntry<SpellEquippedItemsEntryV12, SpellEquippedItemsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellPowerV12 ?? Enumerable.Empty<KeyValuePair<int, SpellPowerEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Powers.Add(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellReagentsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellReagentsEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Reagents = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellReagentsCurrV12 ?? Enumerable.Empty<KeyValuePair<int, SpellReagentsCurrencyEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.ReagentsCurrency.Add(ConvertEntry<SpellReagentsCurrencyEntryV12, SpellReagentsCurrencyEntry>(kv.Value));
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellShapeshiftV12 ?? Enumerable.Empty<KeyValuePair<int, SpellShapeshiftEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Shapeshift = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellTotemsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellTotemsEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Totems = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellXSpellVisualV12 ?? Enumerable.Empty<KeyValuePair<int, SpellXSpellVisualEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0 || kv.Value.CasterPlayerConditionID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.SpellXSpellVisual = ConvertEntry<SpellXSpellVisualEntryV12, SpellXSpellVisualEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellLabelV12 ?? Enumerable.Empty<KeyValuePair<int, SpellLabelEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Labels.Add(kv.Value.LabelID);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    if (spellXDescVarsV12 == null || spellDescVarsV12 == null) return;
+                    foreach (var kv in spellXDescVarsV12)
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.DescriptionVariables = spellDescVarsV12.GetValue(kv.Value.SpellDescriptionVariablesID);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    if (itemEffectV12 == null || itemXItemEffectV12 == null) return;
+                    foreach (var kv in itemXItemEffectV12)
+                    {
+                        if (!itemEffectV12.TryGetValue(kv.Value.ItemEffectID, out var itemEffect)) continue;
+                        if (!SpellInfoStore.ContainsKey(itemEffect.SpellID)) continue;
+
+                        var canonical = ConvertEntry<ItemEffectEntryV12, ItemEffectEntry>(itemEffect);
+                        canonical.ItemID = kv.Value.ItemID;
+                        if (itemSparseV12 != null && itemSparseV12.TryGetValue(kv.Value.ItemID, out var item))
+                            canonical.Item = ConvertEntry<ItemSparseEntryV12, ItemSparseEntry>(item);
+                        SpellInfoStore[itemEffect.SpellID].ItemEffects.Add(canonical);
                     }
                 })
             );

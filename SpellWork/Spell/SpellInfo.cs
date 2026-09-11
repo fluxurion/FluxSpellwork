@@ -61,6 +61,8 @@ namespace SpellWork.Spell
         [IgnoreAutopopulatedFilterValue]
         public SpellDurationEntry DurationEntry { get; set; }
         [IgnoreAutopopulatedFilterValue]
+        public SpellDurationEntry PvpDurationEntry { get; set; }
+        [IgnoreAutopopulatedFilterValue]
         public SpellRangeEntry Range { get; set; }
 
         // Helper
