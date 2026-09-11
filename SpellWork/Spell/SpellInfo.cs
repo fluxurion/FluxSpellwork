@@ -391,14 +391,15 @@ namespace SpellWork.Spell
                 if (query.Length != 0)
                 {
                     var skill = query.First().Value;
-                    var line = DBC.DBC.SkillLine[skill.SkillLine];
+                    if (DBC.DBC.SkillLine != null && DBC.DBC.SkillLine.TryGetValue(skill.SkillLine, out var line))
+                    {
+                        rtb.AppendFormatLine(@"Skill (Id {0}) ""{1}""", skill.SkillLine, line.DisplayName);
+                        rtb.AppendFormat("    MinSkillLineRank {0}", skill.MinSkillLineRank);
 
-                    rtb.AppendFormatLine(@"Skill (Id {0}) ""{1}""", skill.SkillLine, line.DisplayName);
-                    rtb.AppendFormat("    MinSkillLineRank {0}", skill.MinSkillLineRank);
-
-                    rtb.AppendFormat(", SupercedesSpell = {0}, MinMaxValue ({1}, {2})", skill.SupercedesSpell,
-                        skill.TrivialSkillLineRankLow, skill.TrivialSkillLineRankHigh);
-                    rtb.AppendFormat(", NumSkillups ({0})", skill.NumSkillUps);
+                        rtb.AppendFormat(", SupercedesSpell = {0}, MinMaxValue ({1}, {2})", skill.SupercedesSpell,
+                            skill.TrivialSkillLineRankLow, skill.TrivialSkillLineRankHigh);
+                        rtb.AppendFormat(", NumSkillups ({0})", skill.NumSkillUps);
+                    }
                 }
             }
 
