@@ -1151,6 +1151,8 @@ namespace SpellWork.DBC
             foreach (var kv in spellNameV12)
             {
                 var entry = spellEntryV12?.GetValue((int)kv.Value.ID);
+                if (entry == null)
+                    continue;
                 SpellInfoStore[(int)kv.Value.ID] = new SpellInfo(kv.Value.Name ?? string.Empty, entry);
             }
 
