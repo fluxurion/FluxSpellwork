@@ -145,7 +145,7 @@ namespace SpellWork.Forms
             _rb12x.Size = new System.Drawing.Size(235, 23);
             _rb12x.TabIndex = 3;
             _rb12x.Tag = "12.x";
-            _rb12x.Text = "The War Within (12.x)";
+            _rb12x.Text = "Midnight (12.x)";
             _rb12x.UseVisualStyleBackColor = true;
             // 
             // _pnlStep2
