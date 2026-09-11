@@ -18,6 +18,7 @@ namespace SpellWork.Forms
             _pnlStep1 = new System.Windows.Forms.Panel();
             _lblVersionPrompt = new System.Windows.Forms.Label();
             _pnlVersions = new System.Windows.Forms.Panel();
+            _rb12x = new System.Windows.Forms.RadioButton();
             _rb10x = new System.Windows.Forms.RadioButton();
             _rb8x = new System.Windows.Forms.RadioButton();
             _rb7x = new System.Windows.Forms.RadioButton();
@@ -74,7 +75,7 @@ namespace SpellWork.Forms
             _pnlStep1.Controls.Add(_pnlVersions);
             _pnlStep1.Location = new System.Drawing.Point(0, 72);
             _pnlStep1.Name = "_pnlStep1";
-            _pnlStep1.Size = new System.Drawing.Size(440, 200);
+            _pnlStep1.Size = new System.Drawing.Size(440, 235);
             _pnlStep1.TabIndex = 2;
             // 
             // _lblVersionPrompt
@@ -92,9 +93,10 @@ namespace SpellWork.Forms
             _pnlVersions.Controls.Add(_rb7x);
             _pnlVersions.Controls.Add(_rb8x);
             _pnlVersions.Controls.Add(_rb10x);
+            _pnlVersions.Controls.Add(_rb12x);
             _pnlVersions.Location = new System.Drawing.Point(30, 40);
             _pnlVersions.Name = "_pnlVersions";
-            _pnlVersions.Size = new System.Drawing.Size(380, 130);
+            _pnlVersions.Size = new System.Drawing.Size(380, 165);
             _pnlVersions.TabIndex = 1;
             // 
             // _rb7x
@@ -133,6 +135,18 @@ namespace SpellWork.Forms
             _rb10x.Tag = "10.x";
             _rb10x.Text = "Dragonflight (10.x)";
             _rb10x.UseVisualStyleBackColor = true;
+            // 
+            // _rb12x
+            // 
+            _rb12x.AutoSize = true;
+            _rb12x.Font = new System.Drawing.Font("Segoe UI", 10F);
+            _rb12x.Location = new System.Drawing.Point(10, 115);
+            _rb12x.Name = "_rb12x";
+            _rb12x.Size = new System.Drawing.Size(235, 23);
+            _rb12x.TabIndex = 3;
+            _rb12x.Tag = "12.x";
+            _rb12x.Text = "The War Within (12.x)";
+            _rb12x.UseVisualStyleBackColor = true;
             // 
             // _pnlStep2
             // 
@@ -335,6 +349,7 @@ namespace SpellWork.Forms
         private System.Windows.Forms.RadioButton _rb7x;
         private System.Windows.Forms.RadioButton _rb8x;
         private System.Windows.Forms.RadioButton _rb10x;
+        private System.Windows.Forms.RadioButton _rb12x;
         private System.Windows.Forms.Panel _pnlStep2;
         private System.Windows.Forms.Label _lblDb2Prompt;
         private System.Windows.Forms.Label _lblDb2Path;

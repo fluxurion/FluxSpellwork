@@ -21,6 +21,7 @@ namespace SpellWork.DBC
 {
     public static class DBC
     {
+        public const string Version12x = "SpellWork 12.0.0 (65390)";
         public const string Version10x = "SpellWork 10.2.5 (52902)";
         public const string Version8x  = "SpellWork 8.3.0 (34220)";
         public const string Version7x  = "SpellWork 7.2.5 (24330)";
@@ -29,14 +30,16 @@ namespace SpellWork.DBC
         {
             "7.x"  => Version7x,
             "8.x"  => Version8x,
-            _      => Version10x
+            "10.x" => Version10x,
+            _      => Version12x
         };
 
         public static uint MaxLevel => Settings.Default.GameVersion switch
         {
             "7.x"  => 110u,
             "8.x"  => 120u,
-            _      => 70u
+            "10.x" => 70u,
+            _      => 80u
         };
 
         public const uint MaxItemLevel = 1300;
