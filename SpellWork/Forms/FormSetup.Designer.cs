@@ -21,6 +21,8 @@ namespace SpellWork.Forms
             _rb10x = new System.Windows.Forms.RadioButton();
             _rb8x = new System.Windows.Forms.RadioButton();
             _rb7x = new System.Windows.Forms.RadioButton();
+            _rbClassicEra = new System.Windows.Forms.RadioButton();
+            _rbForever = new System.Windows.Forms.RadioButton();
             _pnlStep2 = new System.Windows.Forms.Panel();
             _lblDb2Prompt = new System.Windows.Forms.Label();
             _lblDb2Path = new System.Windows.Forms.Label();
@@ -74,7 +76,7 @@ namespace SpellWork.Forms
             _pnlStep1.Controls.Add(_pnlVersions);
             _pnlStep1.Location = new System.Drawing.Point(0, 72);
             _pnlStep1.Name = "_pnlStep1";
-            _pnlStep1.Size = new System.Drawing.Size(440, 200);
+            _pnlStep1.Size = new System.Drawing.Size(440, 245);
             _pnlStep1.TabIndex = 2;
             // 
             // _lblVersionPrompt
@@ -92,9 +94,11 @@ namespace SpellWork.Forms
             _pnlVersions.Controls.Add(_rb7x);
             _pnlVersions.Controls.Add(_rb8x);
             _pnlVersions.Controls.Add(_rb10x);
+            _pnlVersions.Controls.Add(_rbClassicEra);
+            _pnlVersions.Controls.Add(_rbForever);
             _pnlVersions.Location = new System.Drawing.Point(30, 40);
             _pnlVersions.Name = "_pnlVersions";
-            _pnlVersions.Size = new System.Drawing.Size(380, 130);
+            _pnlVersions.Size = new System.Drawing.Size(380, 190);
             _pnlVersions.TabIndex = 1;
             // 
             // _rb7x
@@ -133,6 +137,30 @@ namespace SpellWork.Forms
             _rb10x.Tag = "10.x";
             _rb10x.Text = "Dragonflight (10.x)";
             _rb10x.UseVisualStyleBackColor = true;
+            // 
+            // _rbClassicEra
+            // 
+            _rbClassicEra.AutoSize = true;
+            _rbClassicEra.Font = new System.Drawing.Font("Segoe UI", 10F);
+            _rbClassicEra.Location = new System.Drawing.Point(10, 115);
+            _rbClassicEra.Name = "_rbClassicEra";
+            _rbClassicEra.Size = new System.Drawing.Size(230, 23);
+            _rbClassicEra.TabIndex = 3;
+            _rbClassicEra.Tag = "classic_era";
+            _rbClassicEra.Text = "Classic Era (1.15.x)";
+            _rbClassicEra.UseVisualStyleBackColor = true;
+            // 
+            // _rbForever
+            // 
+            _rbForever.AutoSize = true;
+            _rbForever.Font = new System.Drawing.Font("Segoe UI", 10F);
+            _rbForever.Location = new System.Drawing.Point(10, 150);
+            _rbForever.Name = "_rbForever";
+            _rbForever.Size = new System.Drawing.Size(230, 23);
+            _rbForever.TabIndex = 4;
+            _rbForever.Tag = "forever";
+            _rbForever.Text = "Classic Forever (1.60.x)";
+            _rbForever.UseVisualStyleBackColor = true;
             // 
             // _pnlStep2
             // 
@@ -335,6 +363,8 @@ namespace SpellWork.Forms
         private System.Windows.Forms.RadioButton _rb7x;
         private System.Windows.Forms.RadioButton _rb8x;
         private System.Windows.Forms.RadioButton _rb10x;
+        private System.Windows.Forms.RadioButton _rbClassicEra;
+        private System.Windows.Forms.RadioButton _rbForever;
         private System.Windows.Forms.Panel _pnlStep2;
         private System.Windows.Forms.Label _lblDb2Prompt;
         private System.Windows.Forms.Label _lblDb2Path;
