@@ -3,6 +3,7 @@ using SpellWork.Database;
 using SpellWork.DBC.Structures;
 using SpellWork.DBC.Structures.V7;
 using SpellWork.DBC.Structures.V8;
+using SpellWork.DBC.Structures.V12;
 using SpellWork.DBC.Structures.V115;
 using SpellWork.DBC.Structures.V160;
 using SpellWork.Extensions;
@@ -23,6 +24,7 @@ namespace SpellWork.DBC
 {
     public static class DBC
     {
+        public const string Version12x       = "SpellWork 12.0.0 (65390)";
         public const string Version10x       = "SpellWork 10.2.5 (52902)";
         public const string Version8x        = "SpellWork 8.3.0 (34220)";
         public const string Version7x        = "SpellWork 7.2.5 (24330)";
@@ -33,18 +35,20 @@ namespace SpellWork.DBC
         {
             "7.x"         => Version7x,
             "8.x"         => Version8x,
+            "10.x"        => Version10x,
             "classic_era" => VersionClassicEra,
             "forever"     => VersionForever,
-            _             => Version10x
+            _             => Version12x
         };
 
         public static uint MaxLevel => Settings.Default.GameVersion switch
         {
             "7.x"         => 110u,
             "8.x"         => 120u,
+            "10.x"        => 70u,
             "classic_era" => 60u,
             "forever"     => 60u,
-            _             => 70u
+            _             => 80u
         };
 
         public const uint MaxItemLevel = 1300;
@@ -95,6 +99,12 @@ namespace SpellWork.DBC
             if (Settings.Default.GameVersion == "8.x")
             {
                 await LoadV8(progressCallback);
+                return;
+            }
+
+            if (Settings.Default.GameVersion == "12.x")
+            {
+                await LoadV12(progressCallback);
                 return;
             }
 
@@ -1016,6 +1026,391 @@ namespace SpellWork.DBC
             progressHandler.SetProgress(100);
         }
 
+        // Copies every public field with a matching name from a versioned structure into a
+        // canonical one, converting numeric types and arrays as needed.
+        private static TDst ConvertEntry<TSrc, TDst>(TSrc src) where TDst : class, new()
+        {
+            if (src == null)
+                return null;
+
+            var dst = new TDst();
+            foreach (var srcField in typeof(TSrc).GetFields(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var dstField = typeof(TDst).GetField(srcField.Name, BindingFlags.Public | BindingFlags.Instance);
+                if (dstField == null)
+                    continue;
+
+                var value = srcField.GetValue(src);
+                if (value == null)
+                    continue;
+
+                try
+                {
+                    if (srcField.FieldType.IsArray && dstField.FieldType.IsArray)
+                    {
+                        var srcArr = (Array)value;
+                        var dstElem = dstField.FieldType.GetElementType();
+                        var dstArr = Array.CreateInstance(dstElem, srcArr.Length);
+                        for (var i = 0; i < srcArr.Length; ++i)
+                            dstArr.SetValue(Convert.ChangeType(srcArr.GetValue(i), dstElem), i);
+                        dstField.SetValue(dst, dstArr);
+                    }
+                    else if (srcField.FieldType == dstField.FieldType)
+                    {
+                        dstField.SetValue(dst, value);
+                    }
+                    else if (!srcField.FieldType.IsArray && !dstField.FieldType.IsArray)
+                    {
+                        dstField.SetValue(dst, Convert.ChangeType(value, dstField.FieldType));
+                    }
+                }
+                catch (Exception ex) when (ex is InvalidCastException || ex is OverflowException || ex is FormatException)
+                {
+                    Console.WriteLine($"[ConvertEntry] {typeof(TSrc).Name}.{srcField.Name} -> {typeof(TDst).Name}: {ex.Message}");
+                }
+            }
+            return dst;
+        }
+
+        private static Storage<TDst> ConvertStorage<TSrc, TDst>(Storage<TSrc> src)
+            where TSrc : class, new() where TDst : class, new()
+        {
+            var dst = new Storage<TDst>();
+            if (src == null)
+                return dst;
+            foreach (var kv in src)
+                dst[kv.Key] = ConvertEntry<TSrc, TDst>(kv.Value);
+            return dst;
+        }
+
+        private static Storage<T> LoadV12DB2<T>(string name, HotfixReader hotfixReader) where T : class, new()
+        {
+            try
+            {
+                return CreateInstance<Storage<T>>(name, hotfixReader);
+            }
+            catch (Exception ex)
+            {
+                var msg = ex is System.Reflection.TargetInvocationException tie ? (tie.InnerException?.Message ?? ex.Message) : ex.Message;
+                Console.WriteLine($"[LoadV12] Could not load {name}.db2: {msg}");
+                return null;
+            }
+        }
+
+        private static async Task LoadV12(Action<int> progressCallback)
+        {
+            var progressHandler = new ProgressHandler(progressCallback);
+
+            HotfixReader hotfixReader = null;
+            try
+            {
+                hotfixReader = new HotfixReader(Settings.Default.HotfixCachePath);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine($"Hotfix cache {Settings.Default.HotfixCachePath} cannot be loaded, ignoring!");
+            }
+
+            progressHandler.SetProgress(5);
+
+            // --- Shared tables; 12.x layouts converted into canonical structs ---
+            AreaGroupMember        = ConvertStorage<AreaGroupMemberEntryV12, AreaGroupMemberEntry>(LoadV12DB2<AreaGroupMemberEntryV12>("AreaGroupMember", hotfixReader));
+            AreaTable              = ConvertStorage<AreaTableEntryV12, AreaTableEntry>(LoadV12DB2<AreaTableEntryV12>("AreaTable", hotfixReader));
+            ContentTuning          = ConvertStorage<ContentTuningEntryV12, ContentTuningEntry>(LoadV12DB2<ContentTuningEntryV12>("ContentTuning", hotfixReader));
+            ContentTuningXExpected = LoadV12DB2<ContentTuningXExpectedEntry>("ContentTuningXExpected", hotfixReader);
+            CraftingData           = new Storage<CraftingDataEntry>(); // table removed in 12.x
+            Difficulty             = ConvertStorage<DifficultyEntryV12, DifficultyEntry>(LoadV12DB2<DifficultyEntryV12>("Difficulty", hotfixReader));
+            ExpectedStat           = ConvertStorage<ExpectedStatEntryV12, ExpectedStatEntry>(LoadV12DB2<ExpectedStatEntryV12>("ExpectedStat", hotfixReader));
+            ExpectedStatMod        = LoadV12DB2<ExpectedStatModEntry>("ExpectedStatMod", hotfixReader);
+            Map                    = ConvertStorage<MapEntryV12, MapEntry>(LoadV12DB2<MapEntryV12>("Map", hotfixReader));
+            MapDifficulty          = ConvertStorage<MapDifficultyEntryV12, MapDifficultyEntry>(LoadV12DB2<MapDifficultyEntryV12>("MapDifficulty", hotfixReader));
+            OverrideSpellData      = ConvertStorage<OverrideSpellDataEntryV12, OverrideSpellDataEntry>(LoadV12DB2<OverrideSpellDataEntryV12>("OverrideSpellData", hotfixReader));
+            ScreenEffect           = ConvertStorage<ScreenEffectEntryV12, ScreenEffectEntry>(LoadV12DB2<ScreenEffectEntryV12>("ScreenEffect", hotfixReader));
+            SpellCastTimes         = LoadV12DB2<SpellCastTimesEntry>("SpellCastTimes", hotfixReader);
+            SpellCategory          = ConvertStorage<SpellCategoryEntryV12, SpellCategoryEntry>(LoadV12DB2<SpellCategoryEntryV12>("SpellCategory", hotfixReader));
+            SpellDuration          = ConvertStorage<SpellDurationEntryV12, SpellDurationEntry>(LoadV12DB2<SpellDurationEntryV12>("SpellDuration", hotfixReader));
+            SpellRadius            = LoadV12DB2<SpellRadiusEntry>("SpellRadius", hotfixReader);
+            SpellRange             = ConvertStorage<SpellRangeEntryV12, SpellRangeEntry>(LoadV12DB2<SpellRangeEntryV12>("SpellRange", hotfixReader));
+            RandPropPoints         = LoadV12DB2<RandPropPointsEntry>("RandPropPoints", hotfixReader);
+            SkillLineAbility       = ConvertStorage<SkillLineAbilityEntryV12, SkillLineAbilityEntry>(LoadV12DB2<SkillLineAbilityEntryV12>("SkillLineAbility", hotfixReader));
+            SkillLine              = ConvertStorage<SkillLineEntryV12, SkillLineEntry>(LoadV12DB2<SkillLineEntryV12>("SkillLine", hotfixReader));
+
+            var spellNameV12          = LoadV12DB2<SpellNameEntry>("SpellName", hotfixReader);
+            var spellEntryV12         = LoadV12DB2<SpellEntry>("Spell", hotfixReader);
+            var spellMiscsV12         = LoadV12DB2<SpellMiscEntryV12>("SpellMisc", hotfixReader);
+            var spellEffectsV12       = LoadV12DB2<SpellEffectEntryV12>("SpellEffect", hotfixReader);
+            var spellLevelsV12        = LoadV12DB2<SpellLevelsEntryV12>("SpellLevels", hotfixReader);
+            var spellCooldownsV12     = LoadV12DB2<SpellCooldownsEntryV12>("SpellCooldowns", hotfixReader);
+            var spellScalingV12       = LoadV12DB2<SpellScalingEntryV12>("SpellScaling", hotfixReader);
+            var spellAuraOptionsV12   = LoadV12DB2<SpellAuraOptionsEntryV12>("SpellAuraOptions", hotfixReader);
+            var spellAuraRestV12      = LoadV12DB2<SpellAuraRestrictionsEntryV12>("SpellAuraRestrictions", hotfixReader);
+            var spellCastingReqsV12   = LoadV12DB2<SpellCastingRequirementsEntryV12>("SpellCastingRequirements", hotfixReader);
+            var spellCategoriesV12    = LoadV12DB2<SpellCategoriesEntryV12>("SpellCategories", hotfixReader);
+            var spellClassOptionsV12  = LoadV12DB2<SpellClassOptionsEntry>("SpellClassOptions", hotfixReader);
+            var spellDescVarsV12      = LoadV12DB2<SpellDescriptionVariablesEntry>("SpellDescriptionVariables", hotfixReader);
+            var spellEquippedItemsV12 = LoadV12DB2<SpellEquippedItemsEntryV12>("SpellEquippedItems", hotfixReader);
+            var spellInterruptsV12    = LoadV12DB2<SpellInterruptsEntryV12>("SpellInterrupts", hotfixReader);
+            var spellPowerV12         = LoadV12DB2<SpellPowerEntry>("SpellPower", hotfixReader);
+            var spellProcsPerMinV12   = LoadV12DB2<SpellProcsPerMinuteEntryV12>("SpellProcsPerMinute", hotfixReader);
+            var spellReagentsV12      = LoadV12DB2<SpellReagentsEntry>("SpellReagents", hotfixReader);
+            var spellReagentsCurrV12  = LoadV12DB2<SpellReagentsCurrencyEntryV12>("SpellReagentsCurrency", hotfixReader);
+            var spellShapeshiftV12    = LoadV12DB2<SpellShapeshiftEntry>("SpellShapeshift", hotfixReader);
+            var spellTargetRestV12    = LoadV12DB2<SpellTargetRestrictionsEntryV12>("SpellTargetRestrictions", hotfixReader);
+            var spellTotemsV12        = LoadV12DB2<SpellTotemsEntry>("SpellTotems", hotfixReader);
+            var spellXSpellVisualV12  = LoadV12DB2<SpellXSpellVisualEntryV12>("SpellXSpellVisual", hotfixReader);
+            var spellXDescVarsV12     = LoadV12DB2<SpellXDescriptionVariablesEntry>("SpellXDescriptionVariables", hotfixReader);
+            var spellLabelV12         = LoadV12DB2<SpellLabelEntry>("SpellLabel", hotfixReader);
+            var itemEffectV12         = LoadV12DB2<ItemEffectEntryV12>("ItemEffect", hotfixReader);
+            var itemSparseV12         = LoadV12DB2<ItemSparseEntryV12>("ItemSparse", hotfixReader);
+            var itemXItemEffectV12    = LoadV12DB2<ItemXItemEffectEntry>("ItemXItemEffect", hotfixReader);
+
+            progressHandler.SetProgress(20);
+
+            // --- Build SpellInfoStore from SpellName (12.x uses separate SpellName table) ---
+            if (spellNameV12 == null)
+                throw new DirectoryNotFoundException("SpellName.db2 could not be loaded.");
+
+            foreach (var kv in spellNameV12)
+            {
+                var entry = spellEntryV12?.GetValue((int)kv.Value.ID);
+                if (entry == null)
+                    continue;
+                SpellInfoStore[(int)kv.Value.ID] = new SpellInfo(kv.Value.Name ?? string.Empty, entry);
+            }
+
+            progressHandler.SetProgress(40);
+
+            await Task.WhenAll(
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellMiscsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellMiscEntryV12>>())
+                    {
+                        var m = kv.Value;
+                        if (m.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(m.SpellID, out var spell)) continue;
+
+                        spell.Misc = ConvertEntry<SpellMiscEntryV12, SpellMiscEntry>(m);
+
+                        if (SpellDuration != null && SpellDuration.TryGetValue(m.DurationIndex, out var dur))
+                            spell.DurationEntry = dur;
+                        if (SpellDuration != null && SpellDuration.TryGetValue(m.PvPDurationIndex, out var pvpDur))
+                            spell.PvpDurationEntry = pvpDur;
+                        if (SpellRange != null && SpellRange.TryGetValue(m.RangeIndex, out var rng))
+                            spell.Range = rng;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellEffectsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellEffectEntryV12>>())
+                    {
+                        var e12 = kv.Value;
+                        if (!SpellInfoStore.TryGetValue(e12.SpellID, out var spellInfo)) continue;
+
+                        var eff = ConvertEntry<SpellEffectEntryV12, SpellEffectEntry>(e12);
+                        spellInfo.SpellEffectInfoStore.Add(new SpellEffectInfo(eff));
+
+                        if (e12.EffectTriggerSpell != 0)
+                        {
+                            if (SpellTriggerStore.TryGetValue(e12.EffectTriggerSpell, out var set))
+                                set.Add(e12.SpellID);
+                            else
+                                SpellTriggerStore.Add(e12.EffectTriggerSpell, new SortedSet<int> { e12.SpellID });
+                        }
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellAuraOptionsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellAuraOptionsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.AuraOptions = ConvertEntry<SpellAuraOptionsEntryV12, SpellAuraOptionsEntry>(kv.Value);
+
+                        if (kv.Value.SpellProcsPerMinuteID != 0 && spellProcsPerMinV12 != null &&
+                            spellProcsPerMinV12.TryGetValue(kv.Value.SpellProcsPerMinuteID, out var ppm))
+                            spell.ProcsPerMinute = ConvertEntry<SpellProcsPerMinuteEntryV12, SpellProcsPerMinuteEntry>(ppm);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellAuraRestV12 ?? Enumerable.Empty<KeyValuePair<int, SpellAuraRestrictionsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.AuraRestrictions = ConvertEntry<SpellAuraRestrictionsEntryV12, SpellAuraRestrictionsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellCategoriesV12 ?? Enumerable.Empty<KeyValuePair<int, SpellCategoriesEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Categories = ConvertEntry<SpellCategoriesEntryV12, SpellCategoriesEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellCooldownsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellCooldownsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Cooldowns = ConvertEntry<SpellCooldownsEntryV12, SpellCooldownsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellInterruptsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellInterruptsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Interrupts = ConvertEntry<SpellInterruptsEntryV12, SpellInterruptsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellLevelsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellLevelsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Levels = ConvertEntry<SpellLevelsEntryV12, SpellLevelsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellScalingV12 ?? Enumerable.Empty<KeyValuePair<int, SpellScalingEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Scaling = ConvertEntry<SpellScalingEntryV12, SpellScalingEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellTargetRestV12 ?? Enumerable.Empty<KeyValuePair<int, SpellTargetRestrictionsEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.TargetRestrictions = ConvertEntry<SpellTargetRestrictionsEntryV12, SpellTargetRestrictionsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellCastingReqsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellCastingRequirementsEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.CastingRequirements = ConvertEntry<SpellCastingRequirementsEntryV12, SpellCastingRequirementsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellClassOptionsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellClassOptionsEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.ClassOptions = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellEquippedItemsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellEquippedItemsEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.EquippedItems = ConvertEntry<SpellEquippedItemsEntryV12, SpellEquippedItemsEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellPowerV12 ?? Enumerable.Empty<KeyValuePair<int, SpellPowerEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Powers.Add(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellReagentsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellReagentsEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Reagents = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellReagentsCurrV12 ?? Enumerable.Empty<KeyValuePair<int, SpellReagentsCurrencyEntryV12>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.ReagentsCurrency.Add(ConvertEntry<SpellReagentsCurrencyEntryV12, SpellReagentsCurrencyEntry>(kv.Value));
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellShapeshiftV12 ?? Enumerable.Empty<KeyValuePair<int, SpellShapeshiftEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Shapeshift = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellTotemsV12 ?? Enumerable.Empty<KeyValuePair<int, SpellTotemsEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Totems = kv.Value;
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellXSpellVisualV12 ?? Enumerable.Empty<KeyValuePair<int, SpellXSpellVisualEntryV12>>())
+                    {
+                        if (kv.Value.DifficultyID != 0 || kv.Value.CasterPlayerConditionID != 0) continue;
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.SpellXSpellVisual = ConvertEntry<SpellXSpellVisualEntryV12, SpellXSpellVisualEntry>(kv.Value);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    foreach (var kv in spellLabelV12 ?? Enumerable.Empty<KeyValuePair<int, SpellLabelEntry>>())
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.Labels.Add(kv.Value.LabelID);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    if (spellXDescVarsV12 == null || spellDescVarsV12 == null) return;
+                    foreach (var kv in spellXDescVarsV12)
+                    {
+                        if (!SpellInfoStore.TryGetValue(kv.Value.SpellID, out var spell)) continue;
+                        spell.DescriptionVariables = spellDescVarsV12.GetValue(kv.Value.SpellDescriptionVariablesID);
+                    }
+                }),
+                Task.Run(() =>
+                {
+                    if (itemEffectV12 == null || itemXItemEffectV12 == null) return;
+                    foreach (var kv in itemXItemEffectV12)
+                    {
+                        if (!itemEffectV12.TryGetValue(kv.Value.ItemEffectID, out var itemEffect)) continue;
+                        if (!SpellInfoStore.ContainsKey(itemEffect.SpellID)) continue;
+
+                        var canonical = ConvertEntry<ItemEffectEntryV12, ItemEffectEntry>(itemEffect);
+                        canonical.ItemID = kv.Value.ItemID;
+                        if (itemSparseV12 != null && itemSparseV12.TryGetValue(kv.Value.ItemID, out var item))
+                            canonical.Item = ConvertEntry<ItemSparseEntryV12, ItemSparseEntry>(item);
+                        SpellInfoStore[itemEffect.SpellID].ItemEffects.Add(canonical);
+                    }
+                })
+            );
+
+            progressHandler.SetProgress(90);
+
+            MySqlConnection.LoadServersideSpells();
+
+            progressHandler.SetProgress(95);
+
+            GameTable<GtSpellScalingEntry>.Open($@"{Settings.Default.GtPath}\SpellScaling.txt");
+
+            progressHandler.SetProgress(100);
+        }
+
         private static Storage<T> LoadV7DB2<T>(string name) where T : class, new()
         {
             try
@@ -1635,7 +2030,7 @@ namespace SpellWork.DBC
             }
         }
 
-        private static SortedDictionary<int, TCanon> ConvertStorage<TRow, TCanon>(Storage<TRow> storage)
+        private static SortedDictionary<int, TCanon> ConvertStorageToCanonical<TRow, TCanon>(Storage<TRow> storage)
             where TRow : class, IConvertsTo<TCanon>, new()
             where TCanon : class, new()
         {
@@ -1683,59 +2078,59 @@ namespace SpellWork.DBC
             progressHandler.SetProgress(5);
 
             // --- Shared lookup tables (1.15.x layouts) ---
-            AreaGroupMember   = ConvertStorage<AreaGroupMemberEntryV115, AreaGroupMemberEntry>(LoadDB2<AreaGroupMemberEntryV115>("AreaGroupMember"));
-            AreaTable         = ConvertStorage<AreaTableEntryV115, AreaTableEntry>(LoadDB2<AreaTableEntryV115>("AreaTable"));
-            ContentTuning     = ConvertStorage<ContentTuningEntryV115, ContentTuningEntry>(LoadDB2<ContentTuningEntryV115>("ContentTuning"));
+            AreaGroupMember   = ConvertStorageToCanonical<AreaGroupMemberEntryV115, AreaGroupMemberEntry>(LoadDB2<AreaGroupMemberEntryV115>("AreaGroupMember"));
+            AreaTable         = ConvertStorageToCanonical<AreaTableEntryV115, AreaTableEntry>(LoadDB2<AreaTableEntryV115>("AreaTable"));
+            ContentTuning     = ConvertStorageToCanonical<ContentTuningEntryV115, ContentTuningEntry>(LoadDB2<ContentTuningEntryV115>("ContentTuning"));
             // ContentTuningXExpected has no 1.15.x layout
             ContentTuningXExpected = new SortedDictionary<int, ContentTuningXExpectedEntry>();
-            CraftingData      = ConvertStorage<CraftingDataEntryV115, CraftingDataEntry>(LoadDB2<CraftingDataEntryV115>("CraftingData"));
-            Difficulty        = ConvertStorage<DifficultyEntryV115, DifficultyEntry>(LoadDB2<DifficultyEntryV115>("Difficulty"));
-            ExpectedStat      = ConvertStorage<ExpectedStatEntryV115, ExpectedStatEntry>(LoadDB2<ExpectedStatEntryV115>("ExpectedStat"));
-            ExpectedStatMod   = ConvertStorage<ExpectedStatModEntryV115, ExpectedStatModEntry>(LoadDB2<ExpectedStatModEntryV115>("ExpectedStatMod"));
-            Map               = ConvertStorage<MapEntryV115, MapEntry>(LoadDB2<MapEntryV115>("Map"));
-            MapDifficulty     = ConvertStorage<MapDifficultyEntryV115, MapDifficultyEntry>(LoadDB2<MapDifficultyEntryV115>("MapDifficulty"));
-            OverrideSpellData = ConvertStorage<OverrideSpellDataEntryV115, OverrideSpellDataEntry>(LoadDB2<OverrideSpellDataEntryV115>("OverrideSpellData"));
-            ScreenEffect      = ConvertStorage<ScreenEffectEntryV115, ScreenEffectEntry>(LoadDB2<ScreenEffectEntryV115>("ScreenEffect"));
-            SpellCastTimes    = ConvertStorage<SpellCastTimesEntryV115, SpellCastTimesEntry>(LoadDB2<SpellCastTimesEntryV115>("SpellCastTimes"));
-            SpellCategory     = ConvertStorage<SpellCategoryEntryV115, SpellCategoryEntry>(LoadDB2<SpellCategoryEntryV115>("SpellCategory"));
-            SpellDuration     = ConvertStorage<SpellDurationEntryV115, SpellDurationEntry>(LoadDB2<SpellDurationEntryV115>("SpellDuration"));
-            SpellRadius       = ConvertStorage<SpellRadiusEntryV115, SpellRadiusEntry>(LoadDB2<SpellRadiusEntryV115>("SpellRadius"));
-            SpellRange        = ConvertStorage<SpellRangeEntryV115, SpellRangeEntry>(LoadDB2<SpellRangeEntryV115>("SpellRange"));
-            RandPropPoints    = ConvertStorage<RandPropPointsEntryV115, RandPropPointsEntry>(LoadDB2<RandPropPointsEntryV115>("RandPropPoints"));
-            SkillLineAbility  = ConvertStorage<SkillLineAbilityEntryV115, SkillLineAbilityEntry>(LoadDB2<SkillLineAbilityEntryV115>("SkillLineAbility"));
-            SkillLine         = ConvertStorage<SkillLineEntryV115, SkillLineEntry>(LoadDB2<SkillLineEntryV115>("SkillLine"));
+            CraftingData      = ConvertStorageToCanonical<CraftingDataEntryV115, CraftingDataEntry>(LoadDB2<CraftingDataEntryV115>("CraftingData"));
+            Difficulty        = ConvertStorageToCanonical<DifficultyEntryV115, DifficultyEntry>(LoadDB2<DifficultyEntryV115>("Difficulty"));
+            ExpectedStat      = ConvertStorageToCanonical<ExpectedStatEntryV115, ExpectedStatEntry>(LoadDB2<ExpectedStatEntryV115>("ExpectedStat"));
+            ExpectedStatMod   = ConvertStorageToCanonical<ExpectedStatModEntryV115, ExpectedStatModEntry>(LoadDB2<ExpectedStatModEntryV115>("ExpectedStatMod"));
+            Map               = ConvertStorageToCanonical<MapEntryV115, MapEntry>(LoadDB2<MapEntryV115>("Map"));
+            MapDifficulty     = ConvertStorageToCanonical<MapDifficultyEntryV115, MapDifficultyEntry>(LoadDB2<MapDifficultyEntryV115>("MapDifficulty"));
+            OverrideSpellData = ConvertStorageToCanonical<OverrideSpellDataEntryV115, OverrideSpellDataEntry>(LoadDB2<OverrideSpellDataEntryV115>("OverrideSpellData"));
+            ScreenEffect      = ConvertStorageToCanonical<ScreenEffectEntryV115, ScreenEffectEntry>(LoadDB2<ScreenEffectEntryV115>("ScreenEffect"));
+            SpellCastTimes    = ConvertStorageToCanonical<SpellCastTimesEntryV115, SpellCastTimesEntry>(LoadDB2<SpellCastTimesEntryV115>("SpellCastTimes"));
+            SpellCategory     = ConvertStorageToCanonical<SpellCategoryEntryV115, SpellCategoryEntry>(LoadDB2<SpellCategoryEntryV115>("SpellCategory"));
+            SpellDuration     = ConvertStorageToCanonical<SpellDurationEntryV115, SpellDurationEntry>(LoadDB2<SpellDurationEntryV115>("SpellDuration"));
+            SpellRadius       = ConvertStorageToCanonical<SpellRadiusEntryV115, SpellRadiusEntry>(LoadDB2<SpellRadiusEntryV115>("SpellRadius"));
+            SpellRange        = ConvertStorageToCanonical<SpellRangeEntryV115, SpellRangeEntry>(LoadDB2<SpellRangeEntryV115>("SpellRange"));
+            RandPropPoints    = ConvertStorageToCanonical<RandPropPointsEntryV115, RandPropPointsEntry>(LoadDB2<RandPropPointsEntryV115>("RandPropPoints"));
+            SkillLineAbility  = ConvertStorageToCanonical<SkillLineAbilityEntryV115, SkillLineAbilityEntry>(LoadDB2<SkillLineAbilityEntryV115>("SkillLineAbility"));
+            SkillLine         = ConvertStorageToCanonical<SkillLineEntryV115, SkillLineEntry>(LoadDB2<SkillLineEntryV115>("SkillLine"));
 
             progressHandler.SetProgress(25);
 
             var stores = new ClassicSpellStores
             {
-                SpellNames           = ConvertStorage<SpellNameEntryV115, SpellNameEntry>(LoadDB2<SpellNameEntryV115>("SpellName")),
-                Spells               = ConvertStorage<SpellEntryV115, SpellEntry>(LoadDB2<SpellEntryV115>("Spell")),
-                Miscs                = ConvertStorage<SpellMiscEntryV115, SpellMiscEntry>(LoadDB2<SpellMiscEntryV115>("SpellMisc")),
-                Effects              = ConvertStorage<SpellEffectEntryV115, SpellEffectEntry>(LoadDB2<SpellEffectEntryV115>("SpellEffect")),
-                TargetRestrictions   = ConvertStorage<SpellTargetRestrictionsEntryV115, SpellTargetRestrictionsEntry>(LoadDB2<SpellTargetRestrictionsEntryV115>("SpellTargetRestrictions")),
-                XSpellVisuals        = ConvertStorage<SpellXSpellVisualEntryV115, SpellXSpellVisualEntry>(LoadDB2<SpellXSpellVisualEntryV115>("SpellXSpellVisual")),
-                Scalings             = ConvertStorage<SpellScalingEntryV115, SpellScalingEntry>(LoadDB2<SpellScalingEntryV115>("SpellScaling")),
-                AuraOptions          = ConvertStorage<SpellAuraOptionsEntryV115, SpellAuraOptionsEntry>(LoadDB2<SpellAuraOptionsEntryV115>("SpellAuraOptions")),
-                ProcsPerMinutes      = ConvertStorage<SpellProcsPerMinuteEntryV115, SpellProcsPerMinuteEntry>(LoadDB2<SpellProcsPerMinuteEntryV115>("SpellProcsPerMinute")),
-                AuraRestrictions     = ConvertStorage<SpellAuraRestrictionsEntryV115, SpellAuraRestrictionsEntry>(LoadDB2<SpellAuraRestrictionsEntryV115>("SpellAuraRestrictions")),
-                Categories           = ConvertStorage<SpellCategoriesEntryV115, SpellCategoriesEntry>(LoadDB2<SpellCategoriesEntryV115>("SpellCategories")),
-                CastingRequirements  = ConvertStorage<SpellCastingRequirementsEntryV115, SpellCastingRequirementsEntry>(LoadDB2<SpellCastingRequirementsEntryV115>("SpellCastingRequirements")),
-                ClassOptions         = ConvertStorage<SpellClassOptionsEntryV115, SpellClassOptionsEntry>(LoadDB2<SpellClassOptionsEntryV115>("SpellClassOptions")),
-                Cooldowns            = ConvertStorage<SpellCooldownsEntryV115, SpellCooldownsEntry>(LoadDB2<SpellCooldownsEntryV115>("SpellCooldowns")),
-                Interrupts           = ConvertStorage<SpellInterruptsEntryV115, SpellInterruptsEntry>(LoadDB2<SpellInterruptsEntryV115>("SpellInterrupts")),
-                EquippedItems        = ConvertStorage<SpellEquippedItemsEntryV115, SpellEquippedItemsEntry>(LoadDB2<SpellEquippedItemsEntryV115>("SpellEquippedItems")),
-                Labels               = ConvertStorage<SpellLabelEntryV115, SpellLabelEntry>(LoadDB2<SpellLabelEntryV115>("SpellLabel")),
-                Levels               = ConvertStorage<SpellLevelsEntryV115, SpellLevelsEntry>(LoadDB2<SpellLevelsEntryV115>("SpellLevels")),
-                Powers               = ConvertStorage<SpellPowerEntryV115, SpellPowerEntry>(LoadDB2<SpellPowerEntryV115>("SpellPower")),
-                Reagents             = ConvertStorage<SpellReagentsEntryV115, SpellReagentsEntry>(LoadDB2<SpellReagentsEntryV115>("SpellReagents")),
-                ReagentsCurrencies   = ConvertStorage<SpellReagentsCurrencyEntryV115, SpellReagentsCurrencyEntry>(LoadDB2<SpellReagentsCurrencyEntryV115>("SpellReagentsCurrency")),
-                Shapeshifts          = ConvertStorage<SpellShapeshiftEntryV115, SpellShapeshiftEntry>(LoadDB2<SpellShapeshiftEntryV115>("SpellShapeshift")),
-                Totems               = ConvertStorage<SpellTotemsEntryV115, SpellTotemsEntry>(LoadDB2<SpellTotemsEntryV115>("SpellTotems")),
-                XDescriptionVariables = ConvertStorage<SpellXDescriptionVariablesEntryV115, SpellXDescriptionVariablesEntry>(LoadDB2<SpellXDescriptionVariablesEntryV115>("SpellXDescriptionVariables")),
-                DescriptionVariables = ConvertStorage<SpellDescriptionVariablesEntryV115, SpellDescriptionVariablesEntry>(LoadDB2<SpellDescriptionVariablesEntryV115>("SpellDescriptionVariables")),
+                SpellNames           = ConvertStorageToCanonical<SpellNameEntryV115, SpellNameEntry>(LoadDB2<SpellNameEntryV115>("SpellName")),
+                Spells               = ConvertStorageToCanonical<SpellEntryV115, SpellEntry>(LoadDB2<SpellEntryV115>("Spell")),
+                Miscs                = ConvertStorageToCanonical<SpellMiscEntryV115, SpellMiscEntry>(LoadDB2<SpellMiscEntryV115>("SpellMisc")),
+                Effects              = ConvertStorageToCanonical<SpellEffectEntryV115, SpellEffectEntry>(LoadDB2<SpellEffectEntryV115>("SpellEffect")),
+                TargetRestrictions   = ConvertStorageToCanonical<SpellTargetRestrictionsEntryV115, SpellTargetRestrictionsEntry>(LoadDB2<SpellTargetRestrictionsEntryV115>("SpellTargetRestrictions")),
+                XSpellVisuals        = ConvertStorageToCanonical<SpellXSpellVisualEntryV115, SpellXSpellVisualEntry>(LoadDB2<SpellXSpellVisualEntryV115>("SpellXSpellVisual")),
+                Scalings             = ConvertStorageToCanonical<SpellScalingEntryV115, SpellScalingEntry>(LoadDB2<SpellScalingEntryV115>("SpellScaling")),
+                AuraOptions          = ConvertStorageToCanonical<SpellAuraOptionsEntryV115, SpellAuraOptionsEntry>(LoadDB2<SpellAuraOptionsEntryV115>("SpellAuraOptions")),
+                ProcsPerMinutes      = ConvertStorageToCanonical<SpellProcsPerMinuteEntryV115, SpellProcsPerMinuteEntry>(LoadDB2<SpellProcsPerMinuteEntryV115>("SpellProcsPerMinute")),
+                AuraRestrictions     = ConvertStorageToCanonical<SpellAuraRestrictionsEntryV115, SpellAuraRestrictionsEntry>(LoadDB2<SpellAuraRestrictionsEntryV115>("SpellAuraRestrictions")),
+                Categories           = ConvertStorageToCanonical<SpellCategoriesEntryV115, SpellCategoriesEntry>(LoadDB2<SpellCategoriesEntryV115>("SpellCategories")),
+                CastingRequirements  = ConvertStorageToCanonical<SpellCastingRequirementsEntryV115, SpellCastingRequirementsEntry>(LoadDB2<SpellCastingRequirementsEntryV115>("SpellCastingRequirements")),
+                ClassOptions         = ConvertStorageToCanonical<SpellClassOptionsEntryV115, SpellClassOptionsEntry>(LoadDB2<SpellClassOptionsEntryV115>("SpellClassOptions")),
+                Cooldowns            = ConvertStorageToCanonical<SpellCooldownsEntryV115, SpellCooldownsEntry>(LoadDB2<SpellCooldownsEntryV115>("SpellCooldowns")),
+                Interrupts           = ConvertStorageToCanonical<SpellInterruptsEntryV115, SpellInterruptsEntry>(LoadDB2<SpellInterruptsEntryV115>("SpellInterrupts")),
+                EquippedItems        = ConvertStorageToCanonical<SpellEquippedItemsEntryV115, SpellEquippedItemsEntry>(LoadDB2<SpellEquippedItemsEntryV115>("SpellEquippedItems")),
+                Labels               = ConvertStorageToCanonical<SpellLabelEntryV115, SpellLabelEntry>(LoadDB2<SpellLabelEntryV115>("SpellLabel")),
+                Levels               = ConvertStorageToCanonical<SpellLevelsEntryV115, SpellLevelsEntry>(LoadDB2<SpellLevelsEntryV115>("SpellLevels")),
+                Powers               = ConvertStorageToCanonical<SpellPowerEntryV115, SpellPowerEntry>(LoadDB2<SpellPowerEntryV115>("SpellPower")),
+                Reagents             = ConvertStorageToCanonical<SpellReagentsEntryV115, SpellReagentsEntry>(LoadDB2<SpellReagentsEntryV115>("SpellReagents")),
+                ReagentsCurrencies   = ConvertStorageToCanonical<SpellReagentsCurrencyEntryV115, SpellReagentsCurrencyEntry>(LoadDB2<SpellReagentsCurrencyEntryV115>("SpellReagentsCurrency")),
+                Shapeshifts          = ConvertStorageToCanonical<SpellShapeshiftEntryV115, SpellShapeshiftEntry>(LoadDB2<SpellShapeshiftEntryV115>("SpellShapeshift")),
+                Totems               = ConvertStorageToCanonical<SpellTotemsEntryV115, SpellTotemsEntry>(LoadDB2<SpellTotemsEntryV115>("SpellTotems")),
+                XDescriptionVariables = ConvertStorageToCanonical<SpellXDescriptionVariablesEntryV115, SpellXDescriptionVariablesEntry>(LoadDB2<SpellXDescriptionVariablesEntryV115>("SpellXDescriptionVariables")),
+                DescriptionVariables = ConvertStorageToCanonical<SpellDescriptionVariablesEntryV115, SpellDescriptionVariablesEntry>(LoadDB2<SpellDescriptionVariablesEntryV115>("SpellDescriptionVariables")),
                 ItemEffects          = new SortedDictionary<int, ItemEffectEntry>(),
-                ItemSparses          = ConvertStorage<ItemSparseEntryV115, ItemSparseEntry>(LoadDB2<ItemSparseEntryV115>("ItemSparse"))
+                ItemSparses          = ConvertStorageToCanonical<ItemSparseEntryV115, ItemSparseEntry>(LoadDB2<ItemSparseEntryV115>("ItemSparse"))
             };
 
             progressHandler.SetProgress(40);
@@ -1767,58 +2162,58 @@ namespace SpellWork.DBC
             progressHandler.SetProgress(5);
 
             // --- Shared lookup tables (1.60.x layouts) ---
-            AreaGroupMember   = ConvertStorage<AreaGroupMemberEntryV160, AreaGroupMemberEntry>(LoadDB2<AreaGroupMemberEntryV160>("AreaGroupMember"));
-            AreaTable         = ConvertStorage<AreaTableEntryV160, AreaTableEntry>(LoadDB2<AreaTableEntryV160>("AreaTable"));
-            ContentTuning     = ConvertStorage<ContentTuningEntryV160, ContentTuningEntry>(LoadDB2<ContentTuningEntryV160>("ContentTuning"));
-            ContentTuningXExpected = ConvertStorage<ContentTuningXExpectedEntryV160, ContentTuningXExpectedEntry>(LoadDB2<ContentTuningXExpectedEntryV160>("ContentTuningXExpected"));
-            CraftingData      = ConvertStorage<CraftingDataEntryV160, CraftingDataEntry>(LoadDB2<CraftingDataEntryV160>("CraftingData"));
-            Difficulty        = ConvertStorage<DifficultyEntryV160, DifficultyEntry>(LoadDB2<DifficultyEntryV160>("Difficulty"));
-            ExpectedStat      = ConvertStorage<ExpectedStatEntryV160, ExpectedStatEntry>(LoadDB2<ExpectedStatEntryV160>("ExpectedStat"));
-            ExpectedStatMod   = ConvertStorage<ExpectedStatModEntryV160, ExpectedStatModEntry>(LoadDB2<ExpectedStatModEntryV160>("ExpectedStatMod"));
-            Map               = ConvertStorage<MapEntryV160, MapEntry>(LoadDB2<MapEntryV160>("Map"));
-            MapDifficulty     = ConvertStorage<MapDifficultyEntryV160, MapDifficultyEntry>(LoadDB2<MapDifficultyEntryV160>("MapDifficulty"));
-            OverrideSpellData = ConvertStorage<OverrideSpellDataEntryV160, OverrideSpellDataEntry>(LoadDB2<OverrideSpellDataEntryV160>("OverrideSpellData"));
-            ScreenEffect      = ConvertStorage<ScreenEffectEntryV160, ScreenEffectEntry>(LoadDB2<ScreenEffectEntryV160>("ScreenEffect"));
-            SpellCastTimes    = ConvertStorage<SpellCastTimesEntryV160, SpellCastTimesEntry>(LoadDB2<SpellCastTimesEntryV160>("SpellCastTimes"));
-            SpellCategory     = ConvertStorage<SpellCategoryEntryV160, SpellCategoryEntry>(LoadDB2<SpellCategoryEntryV160>("SpellCategory"));
-            SpellDuration     = ConvertStorage<SpellDurationEntryV160, SpellDurationEntry>(LoadDB2<SpellDurationEntryV160>("SpellDuration"));
-            SpellRadius       = ConvertStorage<SpellRadiusEntryV160, SpellRadiusEntry>(LoadDB2<SpellRadiusEntryV160>("SpellRadius"));
-            SpellRange        = ConvertStorage<SpellRangeEntryV160, SpellRangeEntry>(LoadDB2<SpellRangeEntryV160>("SpellRange"));
-            RandPropPoints    = ConvertStorage<RandPropPointsEntryV160, RandPropPointsEntry>(LoadDB2<RandPropPointsEntryV160>("RandPropPoints"));
-            SkillLineAbility  = ConvertStorage<SkillLineAbilityEntryV160, SkillLineAbilityEntry>(LoadDB2<SkillLineAbilityEntryV160>("SkillLineAbility"));
-            SkillLine         = ConvertStorage<SkillLineEntryV160, SkillLineEntry>(LoadDB2<SkillLineEntryV160>("SkillLine"));
+            AreaGroupMember   = ConvertStorageToCanonical<AreaGroupMemberEntryV160, AreaGroupMemberEntry>(LoadDB2<AreaGroupMemberEntryV160>("AreaGroupMember"));
+            AreaTable         = ConvertStorageToCanonical<AreaTableEntryV160, AreaTableEntry>(LoadDB2<AreaTableEntryV160>("AreaTable"));
+            ContentTuning     = ConvertStorageToCanonical<ContentTuningEntryV160, ContentTuningEntry>(LoadDB2<ContentTuningEntryV160>("ContentTuning"));
+            ContentTuningXExpected = ConvertStorageToCanonical<ContentTuningXExpectedEntryV160, ContentTuningXExpectedEntry>(LoadDB2<ContentTuningXExpectedEntryV160>("ContentTuningXExpected"));
+            CraftingData      = ConvertStorageToCanonical<CraftingDataEntryV160, CraftingDataEntry>(LoadDB2<CraftingDataEntryV160>("CraftingData"));
+            Difficulty        = ConvertStorageToCanonical<DifficultyEntryV160, DifficultyEntry>(LoadDB2<DifficultyEntryV160>("Difficulty"));
+            ExpectedStat      = ConvertStorageToCanonical<ExpectedStatEntryV160, ExpectedStatEntry>(LoadDB2<ExpectedStatEntryV160>("ExpectedStat"));
+            ExpectedStatMod   = ConvertStorageToCanonical<ExpectedStatModEntryV160, ExpectedStatModEntry>(LoadDB2<ExpectedStatModEntryV160>("ExpectedStatMod"));
+            Map               = ConvertStorageToCanonical<MapEntryV160, MapEntry>(LoadDB2<MapEntryV160>("Map"));
+            MapDifficulty     = ConvertStorageToCanonical<MapDifficultyEntryV160, MapDifficultyEntry>(LoadDB2<MapDifficultyEntryV160>("MapDifficulty"));
+            OverrideSpellData = ConvertStorageToCanonical<OverrideSpellDataEntryV160, OverrideSpellDataEntry>(LoadDB2<OverrideSpellDataEntryV160>("OverrideSpellData"));
+            ScreenEffect      = ConvertStorageToCanonical<ScreenEffectEntryV160, ScreenEffectEntry>(LoadDB2<ScreenEffectEntryV160>("ScreenEffect"));
+            SpellCastTimes    = ConvertStorageToCanonical<SpellCastTimesEntryV160, SpellCastTimesEntry>(LoadDB2<SpellCastTimesEntryV160>("SpellCastTimes"));
+            SpellCategory     = ConvertStorageToCanonical<SpellCategoryEntryV160, SpellCategoryEntry>(LoadDB2<SpellCategoryEntryV160>("SpellCategory"));
+            SpellDuration     = ConvertStorageToCanonical<SpellDurationEntryV160, SpellDurationEntry>(LoadDB2<SpellDurationEntryV160>("SpellDuration"));
+            SpellRadius       = ConvertStorageToCanonical<SpellRadiusEntryV160, SpellRadiusEntry>(LoadDB2<SpellRadiusEntryV160>("SpellRadius"));
+            SpellRange        = ConvertStorageToCanonical<SpellRangeEntryV160, SpellRangeEntry>(LoadDB2<SpellRangeEntryV160>("SpellRange"));
+            RandPropPoints    = ConvertStorageToCanonical<RandPropPointsEntryV160, RandPropPointsEntry>(LoadDB2<RandPropPointsEntryV160>("RandPropPoints"));
+            SkillLineAbility  = ConvertStorageToCanonical<SkillLineAbilityEntryV160, SkillLineAbilityEntry>(LoadDB2<SkillLineAbilityEntryV160>("SkillLineAbility"));
+            SkillLine         = ConvertStorageToCanonical<SkillLineEntryV160, SkillLineEntry>(LoadDB2<SkillLineEntryV160>("SkillLine"));
 
             progressHandler.SetProgress(25);
 
             var stores = new ClassicSpellStores
             {
-                SpellNames           = ConvertStorage<SpellNameEntryV160, SpellNameEntry>(LoadDB2<SpellNameEntryV160>("SpellName")),
-                Spells               = ConvertStorage<SpellEntryV160, SpellEntry>(LoadDB2<SpellEntryV160>("Spell")),
-                Miscs                = ConvertStorage<SpellMiscEntryV160, SpellMiscEntry>(LoadDB2<SpellMiscEntryV160>("SpellMisc")),
-                Effects              = ConvertStorage<SpellEffectEntryV160, SpellEffectEntry>(LoadDB2<SpellEffectEntryV160>("SpellEffect")),
-                TargetRestrictions   = ConvertStorage<SpellTargetRestrictionsEntryV160, SpellTargetRestrictionsEntry>(LoadDB2<SpellTargetRestrictionsEntryV160>("SpellTargetRestrictions")),
-                XSpellVisuals        = ConvertStorage<SpellXSpellVisualEntryV160, SpellXSpellVisualEntry>(LoadDB2<SpellXSpellVisualEntryV160>("SpellXSpellVisual")),
-                Scalings             = ConvertStorage<SpellScalingEntryV160, SpellScalingEntry>(LoadDB2<SpellScalingEntryV160>("SpellScaling")),
-                AuraOptions          = ConvertStorage<SpellAuraOptionsEntryV160, SpellAuraOptionsEntry>(LoadDB2<SpellAuraOptionsEntryV160>("SpellAuraOptions")),
-                ProcsPerMinutes      = ConvertStorage<SpellProcsPerMinuteEntryV160, SpellProcsPerMinuteEntry>(LoadDB2<SpellProcsPerMinuteEntryV160>("SpellProcsPerMinute")),
-                AuraRestrictions     = ConvertStorage<SpellAuraRestrictionsEntryV160, SpellAuraRestrictionsEntry>(LoadDB2<SpellAuraRestrictionsEntryV160>("SpellAuraRestrictions")),
-                Categories           = ConvertStorage<SpellCategoriesEntryV160, SpellCategoriesEntry>(LoadDB2<SpellCategoriesEntryV160>("SpellCategories")),
-                CastingRequirements  = ConvertStorage<SpellCastingRequirementsEntryV160, SpellCastingRequirementsEntry>(LoadDB2<SpellCastingRequirementsEntryV160>("SpellCastingRequirements")),
-                ClassOptions         = ConvertStorage<SpellClassOptionsEntryV160, SpellClassOptionsEntry>(LoadDB2<SpellClassOptionsEntryV160>("SpellClassOptions")),
-                Cooldowns            = ConvertStorage<SpellCooldownsEntryV160, SpellCooldownsEntry>(LoadDB2<SpellCooldownsEntryV160>("SpellCooldowns")),
-                Interrupts           = ConvertStorage<SpellInterruptsEntryV160, SpellInterruptsEntry>(LoadDB2<SpellInterruptsEntryV160>("SpellInterrupts")),
-                EquippedItems        = ConvertStorage<SpellEquippedItemsEntryV160, SpellEquippedItemsEntry>(LoadDB2<SpellEquippedItemsEntryV160>("SpellEquippedItems")),
-                Labels               = ConvertStorage<SpellLabelEntryV160, SpellLabelEntry>(LoadDB2<SpellLabelEntryV160>("SpellLabel")),
-                Levels               = ConvertStorage<SpellLevelsEntryV160, SpellLevelsEntry>(LoadDB2<SpellLevelsEntryV160>("SpellLevels")),
-                Powers               = ConvertStorage<SpellPowerEntryV160, SpellPowerEntry>(LoadDB2<SpellPowerEntryV160>("SpellPower")),
-                Reagents             = ConvertStorage<SpellReagentsEntryV160, SpellReagentsEntry>(LoadDB2<SpellReagentsEntryV160>("SpellReagents")),
-                ReagentsCurrencies   = ConvertStorage<SpellReagentsCurrencyEntryV160, SpellReagentsCurrencyEntry>(LoadDB2<SpellReagentsCurrencyEntryV160>("SpellReagentsCurrency")),
-                Shapeshifts          = ConvertStorage<SpellShapeshiftEntryV160, SpellShapeshiftEntry>(LoadDB2<SpellShapeshiftEntryV160>("SpellShapeshift")),
-                Totems               = ConvertStorage<SpellTotemsEntryV160, SpellTotemsEntry>(LoadDB2<SpellTotemsEntryV160>("SpellTotems")),
-                XDescriptionVariables = ConvertStorage<SpellXDescriptionVariablesEntryV160, SpellXDescriptionVariablesEntry>(LoadDB2<SpellXDescriptionVariablesEntryV160>("SpellXDescriptionVariables")),
-                DescriptionVariables = ConvertStorage<SpellDescriptionVariablesEntryV160, SpellDescriptionVariablesEntry>(LoadDB2<SpellDescriptionVariablesEntryV160>("SpellDescriptionVariables")),
-                ItemEffects          = ConvertStorage<ItemEffectEntryV160, ItemEffectEntry>(LoadDB2<ItemEffectEntryV160>("ItemEffect")),
-                ItemSparses          = ConvertStorage<ItemSparseEntryV160, ItemSparseEntry>(LoadDB2<ItemSparseEntryV160>("ItemSparse"))
+                SpellNames           = ConvertStorageToCanonical<SpellNameEntryV160, SpellNameEntry>(LoadDB2<SpellNameEntryV160>("SpellName")),
+                Spells               = ConvertStorageToCanonical<SpellEntryV160, SpellEntry>(LoadDB2<SpellEntryV160>("Spell")),
+                Miscs                = ConvertStorageToCanonical<SpellMiscEntryV160, SpellMiscEntry>(LoadDB2<SpellMiscEntryV160>("SpellMisc")),
+                Effects              = ConvertStorageToCanonical<SpellEffectEntryV160, SpellEffectEntry>(LoadDB2<SpellEffectEntryV160>("SpellEffect")),
+                TargetRestrictions   = ConvertStorageToCanonical<SpellTargetRestrictionsEntryV160, SpellTargetRestrictionsEntry>(LoadDB2<SpellTargetRestrictionsEntryV160>("SpellTargetRestrictions")),
+                XSpellVisuals        = ConvertStorageToCanonical<SpellXSpellVisualEntryV160, SpellXSpellVisualEntry>(LoadDB2<SpellXSpellVisualEntryV160>("SpellXSpellVisual")),
+                Scalings             = ConvertStorageToCanonical<SpellScalingEntryV160, SpellScalingEntry>(LoadDB2<SpellScalingEntryV160>("SpellScaling")),
+                AuraOptions          = ConvertStorageToCanonical<SpellAuraOptionsEntryV160, SpellAuraOptionsEntry>(LoadDB2<SpellAuraOptionsEntryV160>("SpellAuraOptions")),
+                ProcsPerMinutes      = ConvertStorageToCanonical<SpellProcsPerMinuteEntryV160, SpellProcsPerMinuteEntry>(LoadDB2<SpellProcsPerMinuteEntryV160>("SpellProcsPerMinute")),
+                AuraRestrictions     = ConvertStorageToCanonical<SpellAuraRestrictionsEntryV160, SpellAuraRestrictionsEntry>(LoadDB2<SpellAuraRestrictionsEntryV160>("SpellAuraRestrictions")),
+                Categories           = ConvertStorageToCanonical<SpellCategoriesEntryV160, SpellCategoriesEntry>(LoadDB2<SpellCategoriesEntryV160>("SpellCategories")),
+                CastingRequirements  = ConvertStorageToCanonical<SpellCastingRequirementsEntryV160, SpellCastingRequirementsEntry>(LoadDB2<SpellCastingRequirementsEntryV160>("SpellCastingRequirements")),
+                ClassOptions         = ConvertStorageToCanonical<SpellClassOptionsEntryV160, SpellClassOptionsEntry>(LoadDB2<SpellClassOptionsEntryV160>("SpellClassOptions")),
+                Cooldowns            = ConvertStorageToCanonical<SpellCooldownsEntryV160, SpellCooldownsEntry>(LoadDB2<SpellCooldownsEntryV160>("SpellCooldowns")),
+                Interrupts           = ConvertStorageToCanonical<SpellInterruptsEntryV160, SpellInterruptsEntry>(LoadDB2<SpellInterruptsEntryV160>("SpellInterrupts")),
+                EquippedItems        = ConvertStorageToCanonical<SpellEquippedItemsEntryV160, SpellEquippedItemsEntry>(LoadDB2<SpellEquippedItemsEntryV160>("SpellEquippedItems")),
+                Labels               = ConvertStorageToCanonical<SpellLabelEntryV160, SpellLabelEntry>(LoadDB2<SpellLabelEntryV160>("SpellLabel")),
+                Levels               = ConvertStorageToCanonical<SpellLevelsEntryV160, SpellLevelsEntry>(LoadDB2<SpellLevelsEntryV160>("SpellLevels")),
+                Powers               = ConvertStorageToCanonical<SpellPowerEntryV160, SpellPowerEntry>(LoadDB2<SpellPowerEntryV160>("SpellPower")),
+                Reagents             = ConvertStorageToCanonical<SpellReagentsEntryV160, SpellReagentsEntry>(LoadDB2<SpellReagentsEntryV160>("SpellReagents")),
+                ReagentsCurrencies   = ConvertStorageToCanonical<SpellReagentsCurrencyEntryV160, SpellReagentsCurrencyEntry>(LoadDB2<SpellReagentsCurrencyEntryV160>("SpellReagentsCurrency")),
+                Shapeshifts          = ConvertStorageToCanonical<SpellShapeshiftEntryV160, SpellShapeshiftEntry>(LoadDB2<SpellShapeshiftEntryV160>("SpellShapeshift")),
+                Totems               = ConvertStorageToCanonical<SpellTotemsEntryV160, SpellTotemsEntry>(LoadDB2<SpellTotemsEntryV160>("SpellTotems")),
+                XDescriptionVariables = ConvertStorageToCanonical<SpellXDescriptionVariablesEntryV160, SpellXDescriptionVariablesEntry>(LoadDB2<SpellXDescriptionVariablesEntryV160>("SpellXDescriptionVariables")),
+                DescriptionVariables = ConvertStorageToCanonical<SpellDescriptionVariablesEntryV160, SpellDescriptionVariablesEntry>(LoadDB2<SpellDescriptionVariablesEntryV160>("SpellDescriptionVariables")),
+                ItemEffects          = ConvertStorageToCanonical<ItemEffectEntryV160, ItemEffectEntry>(LoadDB2<ItemEffectEntryV160>("ItemEffect")),
+                ItemSparses          = ConvertStorageToCanonical<ItemSparseEntryV160, ItemSparseEntry>(LoadDB2<ItemSparseEntryV160>("ItemSparse"))
             };
 
             progressHandler.SetProgress(40);

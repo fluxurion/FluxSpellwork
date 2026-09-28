@@ -2,6 +2,7 @@ using SpellWork.Database;
 using SpellWork.Extensions;
 using SpellWork.Filtering;
 using SpellWork.Spell;
+using SpellWork.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -194,7 +195,8 @@ namespace SpellWork.Forms
             using (var previewForm = new Form())
             using (var scriptTextBox = new TextBox())
             {
-                previewForm.Text = $@"Generated SpellScript - {spell.ID}";
+                var gameVersion = Settings.Default.GameVersion ?? "10.x";
+                previewForm.Text = $@"Generated SpellScript ({gameVersion}) - {spell.ID}";
                 previewForm.StartPosition = FormStartPosition.CenterParent;
                 previewForm.Size = new Size(1000, 700);
                 previewForm.MinimumSize = new Size(700, 500);
@@ -225,6 +227,14 @@ namespace SpellWork.Forms
         }
 
         private static string BuildSpellScriptTemplate(SpellInfo spell)
+        {
+            var gameVersion = Settings.Default.GameVersion;
+            if (gameVersion == "7.x" || gameVersion == "8.x")
+                return BuildSpellScriptTemplateV8(spell, gameVersion);
+            return BuildSpellScriptTemplateV10(spell);
+        }
+
+        private static string BuildSpellScriptTemplateV10(SpellInfo spell)
         {
             var scriptToken = BuildScriptToken(spell.Name);
             var className = $"spell_custom_{scriptToken}";
@@ -400,6 +410,210 @@ namespace SpellWork.Forms
             sb.AppendLine($"    RegisterSpellScript({className}); // {scriptName}");
             if (hasAuraEffects)
                 sb.AppendLine($"    RegisterAuraScript({className}_aura);");
+            sb.AppendLine("}");
+
+            return sb.ToString();
+        }
+
+        private static string BuildSpellScriptTemplateV8(SpellInfo spell, string gameVersion)
+        {
+            var scriptToken = BuildScriptToken(spell.Name);
+            var loaderName = $"spell_custom_{scriptToken}";
+            var spellScriptName = $"{loaderName}_SpellScript";
+            var auraScriptName = $"{loaderName}_AuraScript";
+
+            var effects = spell.SpellEffectInfoStore
+                .Where(e => e.SpellEffect != null)
+                .OrderBy(e => e.EffectIndex)
+                .ToList();
+
+            var triggeredSpellIds = effects
+                .Select(e => e.EffectTriggerSpell)
+                .Where(id => id > 0)
+                .Distinct()
+                .ToList();
+
+            var hasAuraEffects = effects.Any(e => e.EffectAura > 0);
+            var hasSpellEffects = effects.Count > 0 && effects.Any(e => e.EffectAura == 0);
+            var sb = new StringBuilder();
+
+            var versionLabel = gameVersion == "7.x" ? "7.x" : "8.x";
+            sb.AppendLine($"// Example generated from SpellWork for TrinityCore/AzeriteCore {versionLabel} branch.");
+            sb.AppendLine("// Review targets, effect types and guard checks before committing.");
+            sb.AppendLine($"// {spell.ID} - {spell.NameAndSubname}");
+            sb.AppendLine();
+
+            // --- SpellScriptLoader wrapper ---
+            sb.AppendLine($"class {loaderName} : public SpellScriptLoader");
+            sb.AppendLine("{");
+            sb.AppendLine("    public:");
+            sb.AppendLine($"        {loaderName}() : SpellScriptLoader(\"{loaderName}\") {{ }}");
+            sb.AppendLine();
+
+            // --- Inner SpellScript ---
+            if (hasSpellEffects || effects.Count == 0)
+            {
+                sb.AppendLine($"        class {spellScriptName} : public SpellScript");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            PrepareSpellScript({spellScriptName});");
+                sb.AppendLine();
+                sb.AppendLine("            bool Load() override");
+                sb.AppendLine("            {");
+                sb.AppendLine("                return GetCaster() != nullptr;");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+
+                if (triggeredSpellIds.Count > 0)
+                {
+                    sb.AppendLine("            bool Validate(SpellInfo const* /*spellInfo*/) override");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                return ValidateSpellInfo(");
+                    sb.AppendLine("                    {");
+                    for (var i = 0; i < triggeredSpellIds.Count; i++)
+                    {
+                        var separator = i + 1 == triggeredSpellIds.Count ? string.Empty : ",";
+                        sb.AppendLine($"                        {triggeredSpellIds[i]}{separator}");
+                    }
+                    sb.AppendLine("                    });");
+                    sb.AppendLine("            }");
+                    sb.AppendLine();
+                }
+
+                if (effects.Count == 0)
+                {
+                    sb.AppendLine("            void HandleDummy(SpellEffIndex /*effIndex*/)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                // Spell has no explicit effects in loaded data; use this as fallback logic.");
+                    sb.AppendLine("            }");
+                    sb.AppendLine();
+                    sb.AppendLine("            void Register() override");
+                    sb.AppendLine("            {");
+                    sb.AppendLine($"                OnEffectHitTarget += SpellEffectFn({spellScriptName}::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);");
+                    sb.AppendLine("            }");
+                }
+                else
+                {
+                    foreach (var effect in effects.Where(e => e.EffectAura == 0))
+                    {
+                        var effectName = GetSpellEffectToken(effect.Effect);
+                        var auraName = ((AuraType)effect.EffectAura).ToString();
+                        var methodName = $"HandleEffect{effect.EffectIndex}";
+                        var hook = GetSpellHookForEffect(effect.Effect);
+
+                        sb.AppendLine($"            // Effect {effect.EffectIndex}: {effectName}, Aura: {auraName}");
+                        sb.AppendLine($"            void {methodName}(SpellEffIndex /*effIndex*/)");
+                        sb.AppendLine("            {");
+                        sb.AppendLine("                Unit* caster = GetCaster();");
+                        sb.AppendLine("                if (!caster)");
+                        sb.AppendLine("                    return;");
+                        sb.AppendLine();
+                        sb.AppendLine("                Unit* target = GetHitUnit();");
+                        sb.AppendLine("                if (!target)");
+                        sb.AppendLine("                    return;");
+                        sb.AppendLine();
+
+                        if (effect.EffectTriggerSpell > 0)
+                        {
+                            sb.AppendLine($"                // Example trigger from dbc: {effect.EffectTriggerSpell}");
+                            sb.AppendLine($"                caster->CastSpell(target, {effect.EffectTriggerSpell}, true);");
+                        }
+                        else
+                        {
+                            sb.AppendLine("                // Example custom logic:");
+                            sb.AppendLine("                // caster->CastSpell(target, <spellId>, true);");
+                            sb.AppendLine("                // target->RemoveAurasDueToSpell(<spellId>);");
+                            sb.AppendLine("                // SetHitDamage(CalculatePct(GetHitDamage(), <percent>));");
+                        }
+
+                        sb.AppendLine("            }");
+                        sb.AppendLine();
+                    }
+
+                    sb.AppendLine("            SpellCastResult CheckCast()");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                Unit* caster = GetCaster();");
+                    sb.AppendLine("                if (!caster)");
+                    sb.AppendLine("                    return SPELL_FAILED_DONT_REPORT;");
+                    sb.AppendLine();
+                    sb.AppendLine("                // Example condition:");
+                    sb.AppendLine("                // if (!caster->IsInCombat())");
+                    sb.AppendLine("                //     return SPELL_FAILED_CASTER_AURASTATE;");
+                    sb.AppendLine();
+                    sb.AppendLine("                return SPELL_CAST_OK;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine();
+
+                    sb.AppendLine("            void Register() override");
+                    sb.AppendLine("            {");
+                    sb.AppendLine($"                OnCheckCast += SpellCheckCastFn({spellScriptName}::CheckCast);");
+                    foreach (var effect in effects.Where(e => e.EffectAura == 0))
+                    {
+                        var effectName = GetSpellEffectToken(effect.Effect);
+                        var hook = GetSpellHookForEffect(effect.Effect);
+                        sb.AppendLine($"                {hook} += SpellEffectFn({spellScriptName}::HandleEffect{effect.EffectIndex}, {GetEffectIndexToken(effect.EffectIndex)}, {effectName});");
+                    }
+                    sb.AppendLine("            }");
+                }
+
+                sb.AppendLine("        };");
+                sb.AppendLine();
+                sb.AppendLine("        SpellScript* GetSpellScript() const override");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            return new {spellScriptName}();");
+                sb.AppendLine("        }");
+                sb.AppendLine();
+            }
+
+            // --- Inner AuraScript ---
+            if (hasAuraEffects)
+            {
+                sb.AppendLine($"        class {auraScriptName} : public AuraScript");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            PrepareAuraScript({auraScriptName});");
+                sb.AppendLine();
+                sb.AppendLine("            bool Validate(SpellInfo const* /*spellInfo*/) override");
+                sb.AppendLine("            {");
+                sb.AppendLine($"                return ValidateSpellInfo({{{spell.ID}}});");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                Unit* target = GetTarget();");
+                sb.AppendLine("                if (!target)");
+                sb.AppendLine("                    return;");
+                sb.AppendLine();
+                sb.AppendLine("                // Example apply logic for aura effects.");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                // Example cleanup logic.");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            void Register() override");
+                sb.AppendLine("            {");
+                foreach (var auraEffect in effects.Where(e => e.EffectAura > 0))
+                {
+                    sb.AppendLine($"                OnEffectApply += AuraEffectApplyFn({auraScriptName}::OnApply, {GetEffectIndexToken(auraEffect.EffectIndex)}, {GetAuraTypeToken(auraEffect.EffectAura)}, AURA_EFFECT_HANDLE_REAL);");
+                    sb.AppendLine($"                OnEffectRemove += AuraEffectRemoveFn({auraScriptName}::OnRemove, {GetEffectIndexToken(auraEffect.EffectIndex)}, {GetAuraTypeToken(auraEffect.EffectAura)}, AURA_EFFECT_HANDLE_REAL);");
+                }
+                sb.AppendLine("            }");
+                sb.AppendLine("        };");
+                sb.AppendLine();
+                sb.AppendLine("        AuraScript* GetAuraScript() const override");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            return new {auraScriptName}();");
+                sb.AppendLine("        }");
+                sb.AppendLine();
+            }
+
+            // --- Close loader class ---
+            sb.AppendLine("};");
+            sb.AppendLine();
+            sb.AppendLine();
+            sb.AppendLine("void AddSC_custom_spell_scripts()");
+            sb.AppendLine("{");
+            sb.AppendLine($"    new {loaderName}();");
             sb.AppendLine("}");
 
             return sb.ToString();
