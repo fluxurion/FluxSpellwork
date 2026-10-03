@@ -687,7 +687,7 @@ namespace SpellWork.Forms
             // 
             _cbAdvancedFilter2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbAdvancedFilter2.DropDownHeight = 500;
-            _cbAdvancedFilter2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbAdvancedFilter2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbAdvancedFilter2.FormattingEnabled = true;
             _cbAdvancedFilter2.IntegralHeight = false;
             _cbAdvancedFilter2.Location = new System.Drawing.Point(1, 48);
@@ -700,7 +700,7 @@ namespace SpellWork.Forms
             // 
             _cbAdvancedFilter1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbAdvancedFilter1.DropDownHeight = 500;
-            _cbAdvancedFilter1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbAdvancedFilter1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbAdvancedFilter1.FormattingEnabled = true;
             _cbAdvancedFilter1.IntegralHeight = false;
             _cbAdvancedFilter1.Location = new System.Drawing.Point(1, 17);
@@ -757,7 +757,7 @@ namespace SpellWork.Forms
             // 
             _cbAdvancedEffectFilter2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             _cbAdvancedEffectFilter2.DropDownHeight = 500;
-            _cbAdvancedEffectFilter2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbAdvancedEffectFilter2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbAdvancedEffectFilter2.FormattingEnabled = true;
             _cbAdvancedEffectFilter2.IntegralHeight = false;
             _cbAdvancedEffectFilter2.Location = new System.Drawing.Point(12, 110);
@@ -770,7 +770,7 @@ namespace SpellWork.Forms
             // 
             _cbAdvancedEffectFilter1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             _cbAdvancedEffectFilter1.DropDownHeight = 500;
-            _cbAdvancedEffectFilter1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbAdvancedEffectFilter1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbAdvancedEffectFilter1.FormattingEnabled = true;
             _cbAdvancedEffectFilter1.IntegralHeight = false;
             _cbAdvancedEffectFilter1.Location = new System.Drawing.Point(12, 78);
@@ -783,7 +783,7 @@ namespace SpellWork.Forms
             // 
             _cbTarget2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbTarget2.DropDownHeight = 500;
-            _cbTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbTarget2.DropDownWidth = 302;
             _cbTarget2.FormattingEnabled = true;
             _cbTarget2.IntegralHeight = false;
@@ -798,7 +798,7 @@ namespace SpellWork.Forms
             // 
             _cbTarget1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbTarget1.DropDownHeight = 500;
-            _cbTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbTarget1.DropDownWidth = 302;
             _cbTarget1.FormattingEnabled = true;
             _cbTarget1.IntegralHeight = false;
@@ -813,7 +813,7 @@ namespace SpellWork.Forms
             // 
             _cbSpellEffect.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbSpellEffect.DropDownHeight = 500;
-            _cbSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbSpellEffect.DropDownWidth = 302;
             _cbSpellEffect.FormattingEnabled = true;
             _cbSpellEffect.ImeMode = System.Windows.Forms.ImeMode.NoControl;
@@ -829,7 +829,7 @@ namespace SpellWork.Forms
             // 
             _cbSpellAura.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbSpellAura.DropDownHeight = 500;
-            _cbSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbSpellAura.DropDownWidth = 302;
             _cbSpellAura.FormattingEnabled = true;
             _cbSpellAura.IntegralHeight = false;
@@ -844,7 +844,7 @@ namespace SpellWork.Forms
             // 
             _cbSpellFamilyName.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbSpellFamilyName.DropDownHeight = 500;
-            _cbSpellFamilyName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbSpellFamilyName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbSpellFamilyName.DropDownWidth = 302;
             _cbSpellFamilyName.FormattingEnabled = true;
             _cbSpellFamilyName.IntegralHeight = false;
@@ -1166,7 +1166,7 @@ namespace SpellWork.Forms
             // _cbProcFitstSpellFamily
             // 
             _cbProcFitstSpellFamily.DropDownHeight = 500;
-            _cbProcFitstSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcFitstSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcFitstSpellFamily.FormattingEnabled = true;
             _cbProcFitstSpellFamily.IntegralHeight = false;
             _cbProcFitstSpellFamily.Location = new System.Drawing.Point(4, 16);
@@ -1394,7 +1394,7 @@ namespace SpellWork.Forms
             // 
             _cbProcSpellFamilyTree.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbProcSpellFamilyTree.DropDownHeight = 500;
-            _cbProcSpellFamilyTree.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcSpellFamilyTree.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcSpellFamilyTree.FormattingEnabled = true;
             _cbProcSpellFamilyTree.IntegralHeight = false;
             _cbProcSpellFamilyTree.Location = new System.Drawing.Point(1, 2);
@@ -1516,7 +1516,7 @@ namespace SpellWork.Forms
             // 
             _cbProcTarget2.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             _cbProcTarget2.DropDownHeight = 500;
-            _cbProcTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcTarget2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcTarget2.FormattingEnabled = true;
             _cbProcTarget2.IntegralHeight = false;
             _cbProcTarget2.Location = new System.Drawing.Point(124, 104);
@@ -1530,7 +1530,7 @@ namespace SpellWork.Forms
             // 
             _cbProcTarget1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbProcTarget1.DropDownHeight = 500;
-            _cbProcTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcTarget1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcTarget1.FormattingEnabled = true;
             _cbProcTarget1.IntegralHeight = false;
             _cbProcTarget1.Location = new System.Drawing.Point(4, 104);
@@ -1544,7 +1544,7 @@ namespace SpellWork.Forms
             // 
             _cbProcSpellEffect.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbProcSpellEffect.DropDownHeight = 500;
-            _cbProcSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcSpellEffect.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcSpellEffect.FormattingEnabled = true;
             _cbProcSpellEffect.IntegralHeight = false;
             _cbProcSpellEffect.Location = new System.Drawing.Point(4, 78);
@@ -1558,7 +1558,7 @@ namespace SpellWork.Forms
             // 
             _cbProcSpellAura.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbProcSpellAura.DropDownHeight = 500;
-            _cbProcSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcSpellAura.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcSpellAura.FormattingEnabled = true;
             _cbProcSpellAura.IntegralHeight = false;
             _cbProcSpellAura.Location = new System.Drawing.Point(4, 53);
@@ -1572,7 +1572,7 @@ namespace SpellWork.Forms
             // 
             _cbProcSpellFamilyName.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
             _cbProcSpellFamilyName.DropDownHeight = 500;
-            _cbProcSpellFamilyName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbProcSpellFamilyName.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbProcSpellFamilyName.FormattingEnabled = true;
             _cbProcSpellFamilyName.IntegralHeight = false;
             _cbProcSpellFamilyName.Location = new System.Drawing.Point(4, 28);
@@ -1801,7 +1801,7 @@ namespace SpellWork.Forms
             // _cbSqlSpellFamily
             // 
             _cbSqlSpellFamily.DropDownHeight = 500;
-            _cbSqlSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            _cbSqlSpellFamily.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             _cbSqlSpellFamily.FormattingEnabled = true;
             _cbSqlSpellFamily.IntegralHeight = false;
             _cbSqlSpellFamily.Location = new System.Drawing.Point(94, 18);

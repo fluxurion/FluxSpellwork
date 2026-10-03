@@ -52,15 +52,6 @@ namespace SpellWork.Controls
             }
         }
 
-        protected override void OnHandleCreated(EventArgs e)
-        {
-            base.OnHandleCreated(e);
-
-            // the designer assigns DropDownList after construction
-            if (DropDownStyle != ComboBoxStyle.DropDown)
-                DropDownStyle = ComboBoxStyle.DropDown;
-        }
-
         protected override void OnSelectedIndexChanged(EventArgs e)
         {
             if (SelectedIndex >= 0 && SelectedIndex < Items.Count)
