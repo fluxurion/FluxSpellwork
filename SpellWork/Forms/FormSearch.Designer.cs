@@ -46,11 +46,11 @@
             this._chName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this._chMiscID = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this._cbTarget2 = new System.Windows.Forms.ComboBox();
-            this._cbTarget1 = new System.Windows.Forms.ComboBox();
-            this._cbSpellEffect = new System.Windows.Forms.ComboBox();
-            this._cbSpellAura = new System.Windows.Forms.ComboBox();
-            this._cbSpellFamily = new System.Windows.Forms.ComboBox();
+            this._cbTarget2 = new SpellWork.Controls.SearchableComboBox();
+            this._cbTarget1 = new SpellWork.Controls.SearchableComboBox();
+            this._cbSpellEffect = new SpellWork.Controls.SearchableComboBox();
+            this._cbSpellAura = new SpellWork.Controls.SearchableComboBox();
+            this._cbSpellFamily = new SpellWork.Controls.SearchableComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();

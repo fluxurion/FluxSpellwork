@@ -57,23 +57,23 @@ namespace SpellWork.Forms
 
         private void SpellFamilySelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((ComboBox)sender).SelectedIndex <= 0)
+            if (((ComboBox)sender).SelectedIndex < 0)
                 return;
 
-            var bFamilyNames = _cbSpellFamily.SelectedIndex > 0;
-            var fFamilyNames = _cbSpellFamily.SelectedValue.ToInt32();
+            var fFamilyNames = _cbSpellFamily.GetFilterValue();
+            var bFamilyNames = fFamilyNames != -1;
 
-            var bSpellAura = _cbSpellAura.SelectedIndex > 0;
-            var fSpellAura = _cbSpellAura.SelectedValue.ToInt32();
+            var fSpellAura = _cbSpellAura.GetFilterValue();
+            var bSpellAura = fSpellAura != -1;
 
-            var bSpellEffect = _cbSpellEffect.SelectedIndex > 0;
-            var fSpellEffect = _cbSpellEffect.SelectedValue.ToInt32();
+            var fSpellEffect = _cbSpellEffect.GetFilterValue();
+            var bSpellEffect = fSpellEffect != -1;
 
-            var bTarget1 = _cbTarget1.SelectedIndex > 0;
-            var fTarget1 = _cbTarget1.SelectedValue.ToInt32();
+            var fTarget1 = _cbTarget1.GetFilterValue();
+            var bTarget1 = fTarget1 != -1;
 
-            var bTarget2 = _cbTarget2.SelectedIndex > 0;
-            var fTarget2 = _cbTarget2.SelectedValue.ToInt32();
+            var fTarget2 = _cbTarget2.GetFilterValue();
+            var bTarget2 = fTarget2 != -1;
 
             _spellList = (from spell in DBC.DBC.SpellInfoStore.Values
                           where

@@ -132,8 +132,6 @@ namespace SpellWork.Extensions
             cb.DataSource = dt;
             cb.DisplayMember = "NAME";
             cb.ValueMember = "ID";
-
-            cb.MakeSearchable();
         }
 
         public static void SetEnumValuesDirect<T>(this ComboBox cb, bool setFirstValue)
@@ -178,103 +176,33 @@ namespace SpellWork.Extensions
             cb.DataSource    = dt;
             cb.DisplayMember = "NAME";
             cb.ValueMember   = "ID";
-
-            cb.MakeSearchable();
         }
 
         /// <summary>
-        /// Makes a data-bound ComboBox editable so typing filters the drop-down list
-        /// (contains-match on the display text) instead of only allowing selection.
+        /// Returns SelectedValue, or null when the editable combo has no valid
+        /// selection (typed text that doesn't match, or a stale index while the
+        /// bound view is filtered).
         /// </summary>
-        public static void MakeSearchable(this ComboBox cb)
+        public static object SafeSelectedValue(this ComboBox cb)
         {
-            cb.DropDownStyle = ComboBoxStyle.DropDown;
-            cb.AutoCompleteMode = AutoCompleteMode.None;
-
-            var lastIndex = cb.SelectedIndex >= 0 ? cb.SelectedIndex : 0;
-            var openingForFilter = false;
-
-            cb.SelectedIndexChanged += (s, e) =>
+            try
             {
-                if (cb.SelectedIndex >= 0)
-                    lastIndex = cb.SelectedIndex;
-            };
-
-            cb.TextUpdate += (s, e) =>
+                return cb.SelectedIndex >= 0 && cb.SelectedIndex < cb.Items.Count
+                    ? cb.SelectedValue
+                    : null;
+            }
+            catch (ArgumentOutOfRangeException)
             {
-                var table = cb.DataSource as DataTable;
-                if (table == null)
-                    return;
-
-                var text = cb.Text;
-                table.DefaultView.RowFilter = string.IsNullOrEmpty(text)
-                    ? string.Empty
-                    : $"NAME LIKE '%{EscapeLikePattern(text)}%'";
-
-                // filtering can drop the current selection; keep the typed text
-                if (cb.Text != text)
-                    cb.Text = text;
-
-                openingForFilter = true;
-                cb.DroppedDown = true;
-                openingForFilter = false;
-
-                cb.SelectionStart = cb.Text.Length;
-                cb.SelectionLength = 0;
-            };
-
-            cb.DropDown += (s, e) =>
-            {
-                // reopened after a committed selection: show the full list again
-                if (openingForFilter || cb.SelectedIndex < 0 || cb.Text != cb.GetItemText(cb.SelectedItem))
-                    return;
-
-                var table = cb.DataSource as DataTable;
-                if (table != null)
-                    table.DefaultView.RowFilter = string.Empty;
-            };
-
-            cb.Leave += (s, e) =>
-            {
-                var table = cb.DataSource as DataTable;
-                if (table != null)
-                    table.DefaultView.RowFilter = string.Empty;
-
-                if (cb.SelectedIndex >= 0)
-                    return;
-
-                var index = cb.FindStringExact(cb.Text);
-                if (index >= 0)
-                    cb.SelectedIndex = index;
-                else if (string.IsNullOrWhiteSpace(cb.Text))
-                    cb.SelectedIndex = 0;
-                else
-                    cb.SelectedIndex = Math.Min(lastIndex, cb.Items.Count - 1);
-            };
+                return null;
+            }
         }
 
-        private static string EscapeLikePattern(string text)
+        /// <summary>
+        /// Returns the combo's filter value (-1 for the "no value" entry or no valid selection).
+        /// </summary>
+        public static int GetFilterValue(this ComboBox cb)
         {
-            var sb = new StringBuilder(text.Length + 8);
-            foreach (var c in text)
-            {
-                switch (c)
-                {
-                    case '*':
-                    case '%':
-                    case '[':
-                    case ']':
-                        sb.Append('[').Append(c).Append(']');
-                        break;
-                    case '\'':
-                        sb.Append("''");
-                        break;
-                    default:
-                        sb.Append(c);
-                        break;
-                }
-            }
-            return sb.ToString();
+            return cb.SafeSelectedValue()?.ToInt32() ?? -1;
         }
 
         /// <summary>

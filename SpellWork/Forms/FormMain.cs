@@ -705,7 +705,7 @@ namespace SpellWork.Forms
 
         private void CbSpellFamilyNamesSelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((ComboBox)sender).SelectedIndex > 0)
+            if (((ComboBox)sender).SelectedIndex >= 0)
                 AdvancedFilter();
         }
 
@@ -746,27 +746,27 @@ namespace SpellWork.Forms
 
         private void AdvancedFilter()
         {
-            var bFamilyNames = _cbSpellFamilyName.SelectedIndex > 0;
-            var fFamilyNames = _cbSpellFamilyName.SelectedValue.ToInt32();
+            var fFamilyNames = _cbSpellFamilyName.GetFilterValue();
+            var bFamilyNames = fFamilyNames != -1;
 
-            var bSpellAura = _cbSpellAura.SelectedIndex > 0;
-            var fSpellAura = _cbSpellAura.SelectedValue.ToInt32();
+            var fSpellAura = _cbSpellAura.GetFilterValue();
+            var bSpellAura = fSpellAura != -1;
 
-            var bSpellEffect = _cbSpellEffect.SelectedIndex > 0;
-            var fSpellEffect = _cbSpellEffect.SelectedValue.ToInt32();
+            var fSpellEffect = _cbSpellEffect.GetFilterValue();
+            var bSpellEffect = fSpellEffect != -1;
 
-            var bTarget1 = _cbTarget1.SelectedIndex > 0;
-            var fTarget1 = _cbTarget1.SelectedValue.ToInt32();
+            var fTarget1 = _cbTarget1.GetFilterValue();
+            var bTarget1 = fTarget1 != -1;
 
-            var bTarget2 = _cbTarget2.SelectedIndex > 0;
-            var fTarget2 = _cbTarget2.SelectedValue.ToInt32();
+            var fTarget2 = _cbTarget2.GetFilterValue();
+            var bTarget2 = fTarget2 != -1;
 
             // additional spell effect filters
             var advEffectVal1 = _tbAdvancedEffectFilter1Val.Text;
             var advEffectVal2 = _tbAdvancedEffectFilter2Val.Text;
 
-            var fieldEffect1 = (MemberInfo)_cbAdvancedEffectFilter1.SelectedValue;
-            var fieldEffect2 = (MemberInfo)_cbAdvancedEffectFilter2.SelectedValue;
+            var fieldEffect1 = (MemberInfo)_cbAdvancedEffectFilter1.SafeSelectedValue();
+            var fieldEffect2 = (MemberInfo)_cbAdvancedEffectFilter2.SafeSelectedValue();
 
             var use1EffectVal = !string.IsNullOrEmpty(advEffectVal1);
             var use2EffectVal = !string.IsNullOrEmpty(advEffectVal2);
@@ -781,8 +781,8 @@ namespace SpellWork.Forms
             var advVal1 = _tbAdvancedFilter1Val.Text;
             var advVal2 = _tbAdvancedFilter2Val.Text;
 
-            var field1 = (MemberInfo)_cbAdvancedFilter1.SelectedValue;
-            var field2 = (MemberInfo)_cbAdvancedFilter2.SelectedValue;
+            var field1 = (MemberInfo)_cbAdvancedFilter1.SafeSelectedValue();
+            var field2 = (MemberInfo)_cbAdvancedFilter2.SafeSelectedValue();
 
             var use1Val = !string.IsNullOrEmpty(advVal1);
             var use2Val = !string.IsNullOrEmpty(advVal2);
@@ -845,7 +845,7 @@ namespace SpellWork.Forms
 
         private void CbProcSpellFamilyNameSelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((ComboBox)sender).SelectedIndex > 0)
+            if (((ComboBox)sender).SelectedIndex >= 0)
                 ProcFilter();
         }
 
@@ -904,10 +904,7 @@ namespace SpellWork.Forms
 
         private void TvFamilyTreeSelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((ComboBox)sender).SelectedIndex < 0)
-                return;
-
-            var selectedValue = ((ComboBox)sender).SelectedValue.ToInt32();
+            var selectedValue = ((ComboBox)sender).GetFilterValue();
             if (selectedValue == -1)
                 return;
             _tvFamilyTree.Nodes.Clear();
@@ -929,7 +926,7 @@ namespace SpellWork.Forms
         private void GetProcAttribute(SpellInfo spell)
         {
             var SpellFamilyFlags = _tvFamilyTree.GetMask();
-            _lProcHeader.Text = $"Spell ({spell.ID}) {spell.NameAndSubname} ==> SpellFamily {_cbProcFitstSpellFamily.SelectedValue}, 0x{SpellFamilyFlags[0]:X8} {SpellFamilyFlags[1]:X8} {SpellFamilyFlags[2]:X8} {SpellFamilyFlags[3]:X8}";
+            _lProcHeader.Text = $"Spell ({spell.ID}) {spell.NameAndSubname} ==> SpellFamily {_cbProcFitstSpellFamily.SafeSelectedValue()}, 0x{SpellFamilyFlags[0]:X8} {SpellFamilyFlags[1]:X8} {SpellFamilyFlags[2]:X8} {SpellFamilyFlags[3]:X8}";
         }
 
         private void Search()
@@ -949,20 +946,20 @@ namespace SpellWork.Forms
 
         private void ProcFilter()
         {
-            var bFamilyNames = _cbProcSpellFamilyName.SelectedIndex > 0;
-            var fFamilyNames = _cbProcSpellFamilyName.SelectedValue.ToInt32();
+            var fFamilyNames = _cbProcSpellFamilyName.GetFilterValue();
+            var bFamilyNames = fFamilyNames != -1;
 
-            var bSpellAura = _cbProcSpellAura.SelectedIndex > 0;
-            var fSpellAura = _cbProcSpellAura.SelectedValue.ToInt32();
+            var fSpellAura = _cbProcSpellAura.GetFilterValue();
+            var bSpellAura = fSpellAura != -1;
 
-            var bSpellEffect = _cbProcSpellEffect.SelectedIndex > 0;
-            var fSpellEffect = _cbProcSpellEffect.SelectedValue.ToInt32();
+            var fSpellEffect = _cbProcSpellEffect.GetFilterValue();
+            var bSpellEffect = fSpellEffect != -1;
 
-            var bTarget1 = _cbProcTarget1.SelectedIndex > 0;
-            var fTarget1 = _cbProcTarget1.SelectedValue.ToInt32();
+            var fTarget1 = _cbProcTarget1.GetFilterValue();
+            var bTarget1 = fTarget1 != -1;
 
-            var bTarget2 = _cbProcTarget2.SelectedIndex > 0;
-            var fTarget2 = _cbProcTarget2.SelectedValue.ToInt32();
+            var fTarget2 = _cbProcTarget2.GetFilterValue();
+            var bTarget2 = fTarget2 != -1;
 
             _spellProcList = (from spell in DBC.DBC.SpellInfoStore.Values
                               where
@@ -1125,8 +1122,8 @@ namespace SpellWork.Forms
             if (DBC.DBC.SpellInfoStore.ContainsKey(_tbLoadProcSpellId.Text.ToInt32()))
                 conditions.Add($"SpellId = {_tbLoadProcSpellId.Text.ToInt32()}");
 
-            if (_cbSqlSpellFamily.SelectedIndex > 0)
-                conditions.Add($"SpellFamilyName = {_cbSqlSpellFamily.SelectedValue.ToInt32()}");
+            if (_cbSqlSpellFamily.GetFilterValue() != -1)
+                conditions.Add($"SpellFamilyName = {_cbSqlSpellFamily.GetFilterValue()}");
 
             if (_tbSqlSchool.Text.ToUInt32() != 0)
                 conditions.Add($"SchoolMask {compare} {_tbSqlSchool.Text.ToUInt32()}");
@@ -1191,7 +1188,7 @@ namespace SpellWork.Forms
 
             var insert = "INSERT INTO `spell_proc` (`SpellId`,`SchoolMask`,`SpellFamilyName`,`SpellFamilyMask0`,`SpellFamilyMask1`,`SpellFamilyMask2`,`SpellFamilyMask3`,`ProcFlags`,`ProcFlags2`,`SpellTypeMask`,`SpellPhaseMask`,`HitMask`,`AttributesMask`,`DisableEffectsMask`,`ProcsPerMinute`,`Chance`,`Cooldown`,`Charges`) VALUES\r\n"
                 + $"({ProcInfo.SpellProc.ID},0x{_clbSchools.GetFlagsValue():X2},"
-                + $"{_cbProcFitstSpellFamily.SelectedValue.ToUInt32()},0x{spellFamilyFlags[0]:X8},0x{spellFamilyFlags[1]:X8},0x{spellFamilyFlags[2]:X8},0x{spellFamilyFlags[3]:X8},"
+                + $"{_cbProcFitstSpellFamily.SafeSelectedValue().ToUInt32()},0x{spellFamilyFlags[0]:X8},0x{spellFamilyFlags[1]:X8},0x{spellFamilyFlags[2]:X8},0x{spellFamilyFlags[3]:X8},"
                 + $"0x{procFlags:X},0x{procFlags2:X},0x{_clbSpellTypeMask.GetFlagsValue():X},0x{_clbSpellPhaseMask.GetFlagsValue():X},0x{_clbProcFlagHit.GetFlagsValue():X},0x{_clbProcAttributes.GetFlagsValue():X},0x0,{procPPM},{procChance},{procCooldown},{procCharges});";
 
             _rtbSqlLog.AppendText(drop + "\r\n" + insert + comment + "\r\n\r\n");
