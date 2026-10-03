@@ -40,6 +40,9 @@ namespace SpellWork.Filtering
     {
         public static Func<T, bool> CreateFilterFunc<T>(MemberInfo field, object val, CompareType compareType)
         {
+            if (field == null)
+                return entry => true;
+
             Type fieldType = GetMemberType(field);
             switch (Type.GetTypeCode(fieldType))
             {

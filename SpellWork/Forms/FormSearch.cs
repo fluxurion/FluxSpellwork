@@ -57,22 +57,22 @@ namespace SpellWork.Forms
 
         private void SpellFamilySelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((ComboBox)sender).SelectedIndex == 0)
+            if (((ComboBox)sender).SelectedIndex <= 0)
                 return;
 
-            var bFamilyNames = _cbSpellFamily.SelectedIndex != 0;
+            var bFamilyNames = _cbSpellFamily.SelectedIndex > 0;
             var fFamilyNames = _cbSpellFamily.SelectedValue.ToInt32();
 
-            var bSpellAura = _cbSpellAura.SelectedIndex != 0;
+            var bSpellAura = _cbSpellAura.SelectedIndex > 0;
             var fSpellAura = _cbSpellAura.SelectedValue.ToInt32();
 
-            var bSpellEffect = _cbSpellEffect.SelectedIndex != 0;
+            var bSpellEffect = _cbSpellEffect.SelectedIndex > 0;
             var fSpellEffect = _cbSpellEffect.SelectedValue.ToInt32();
 
-            var bTarget1 = _cbTarget1.SelectedIndex != 0;
+            var bTarget1 = _cbTarget1.SelectedIndex > 0;
             var fTarget1 = _cbTarget1.SelectedValue.ToInt32();
 
-            var bTarget2 = _cbTarget2.SelectedIndex != 0;
+            var bTarget2 = _cbTarget2.SelectedIndex > 0;
             var fTarget2 = _cbTarget2.SelectedValue.ToInt32();
 
             _spellList = (from spell in DBC.DBC.SpellInfoStore.Values

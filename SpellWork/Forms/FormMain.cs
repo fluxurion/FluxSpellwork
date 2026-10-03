@@ -705,7 +705,7 @@ namespace SpellWork.Forms
 
         private void CbSpellFamilyNamesSelectedIndexChanged(object sender, EventArgs e)
         {
-            if (((ComboBox)sender).SelectedIndex != 0)
+            if (((ComboBox)sender).SelectedIndex > 0)
                 AdvancedFilter();
         }
 
@@ -746,19 +746,19 @@ namespace SpellWork.Forms
 
         private void AdvancedFilter()
         {
-            var bFamilyNames = _cbSpellFamilyName.SelectedIndex != 0;
+            var bFamilyNames = _cbSpellFamilyName.SelectedIndex > 0;
             var fFamilyNames = _cbSpellFamilyName.SelectedValue.ToInt32();
 
-            var bSpellAura = _cbSpellAura.SelectedIndex != 0;
+            var bSpellAura = _cbSpellAura.SelectedIndex > 0;
             var fSpellAura = _cbSpellAura.SelectedValue.ToInt32();
 
-            var bSpellEffect = _cbSpellEffect.SelectedIndex != 0;
+            var bSpellEffect = _cbSpellEffect.SelectedIndex > 0;
             var fSpellEffect = _cbSpellEffect.SelectedValue.ToInt32();
 
-            var bTarget1 = _cbTarget1.SelectedIndex != 0;
+            var bTarget1 = _cbTarget1.SelectedIndex > 0;
             var fTarget1 = _cbTarget1.SelectedValue.ToInt32();
 
-            var bTarget2 = _cbTarget2.SelectedIndex != 0;
+            var bTarget2 = _cbTarget2.SelectedIndex > 0;
             var fTarget2 = _cbTarget2.SelectedValue.ToInt32();
 
             // additional spell effect filters
@@ -904,6 +904,9 @@ namespace SpellWork.Forms
 
         private void TvFamilyTreeSelectedIndexChanged(object sender, EventArgs e)
         {
+            if (((ComboBox)sender).SelectedIndex < 0)
+                return;
+
             var selectedValue = ((ComboBox)sender).SelectedValue.ToInt32();
             if (selectedValue == -1)
                 return;
@@ -946,19 +949,19 @@ namespace SpellWork.Forms
 
         private void ProcFilter()
         {
-            var bFamilyNames = _cbProcSpellFamilyName.SelectedIndex != 0;
+            var bFamilyNames = _cbProcSpellFamilyName.SelectedIndex > 0;
             var fFamilyNames = _cbProcSpellFamilyName.SelectedValue.ToInt32();
 
-            var bSpellAura = _cbProcSpellAura.SelectedIndex != 0;
+            var bSpellAura = _cbProcSpellAura.SelectedIndex > 0;
             var fSpellAura = _cbProcSpellAura.SelectedValue.ToInt32();
 
-            var bSpellEffect = _cbProcSpellEffect.SelectedIndex != 0;
+            var bSpellEffect = _cbProcSpellEffect.SelectedIndex > 0;
             var fSpellEffect = _cbProcSpellEffect.SelectedValue.ToInt32();
 
-            var bTarget1 = _cbProcTarget1.SelectedIndex != 0;
+            var bTarget1 = _cbProcTarget1.SelectedIndex > 0;
             var fTarget1 = _cbProcTarget1.SelectedValue.ToInt32();
 
-            var bTarget2 = _cbProcTarget2.SelectedIndex != 0;
+            var bTarget2 = _cbProcTarget2.SelectedIndex > 0;
             var fTarget2 = _cbProcTarget2.SelectedValue.ToInt32();
 
             _spellProcList = (from spell in DBC.DBC.SpellInfoStore.Values
@@ -1122,7 +1125,7 @@ namespace SpellWork.Forms
             if (DBC.DBC.SpellInfoStore.ContainsKey(_tbLoadProcSpellId.Text.ToInt32()))
                 conditions.Add($"SpellId = {_tbLoadProcSpellId.Text.ToInt32()}");
 
-            if (_cbSqlSpellFamily.SelectedValue.ToInt32() != -1)
+            if (_cbSqlSpellFamily.SelectedIndex > 0)
                 conditions.Add($"SpellFamilyName = {_cbSqlSpellFamily.SelectedValue.ToInt32()}");
 
             if (_tbSqlSchool.Text.ToUInt32() != 0)
